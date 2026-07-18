@@ -1,7 +1,25 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { fetchAllCategories } from '../api/categories'
+import type { Category } from '../types'
 
 const HomePage: React.FC = () => {
+  const [topCategories, setTopCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchAllCategories()
+      .then((categories) => {
+        // 只取最頂層分類（parent_id === null），依 sort_order 排序
+        const tops = categories
+          .filter((c) => c.parent_id === null)
+          .sort((a, b) => a.sort_order - b.sort_order)
+        setTopCategories(tops)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <div className="home-page">
       {/* Hero Banner */}
@@ -42,16 +60,22 @@ const HomePage: React.FC = () => {
         <h2 className="home-section-title">熱門分類</h2>
         <p className="home-section-subtitle">從左側選單選擇分類，或點擊下方快速前往</p>
         <div className="home-category-links">
-          {['瓷磚', '木地板', '五金配件', '燈具照明'].map((name, i) => (
-            <Link
-              key={i}
-              to={`/category/${i + 1}`}
-              className="home-category-link"
-            >
-              <span className="home-category-link-name">{name}</span>
-              <span className="home-category-link-arrow">→</span>
-            </Link>
-          ))}
+          {loading ? (
+            <span className="home-categories-loading">載入中...</span>
+          ) : topCategories.length === 0 ? (
+            <span className="home-categories-empty">暫無分類</span>
+          ) : (
+            topCategories.map((cat) => (
+              <Link
+                key={cat.id}
+                to={`/category/${cat.id}`}
+                className="home-category-link"
+              >
+                <span className="home-category-link-name">{cat.name}</span>
+                <span className="home-category-link-arrow">→</span>
+              </Link>
+            ))
+          )}
         </div>
       </section>
     </div>
