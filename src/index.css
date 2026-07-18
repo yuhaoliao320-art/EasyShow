@@ -1115,6 +1115,26 @@ textarea {
   margin-top: 24px;
 }
 
+/* ---------- Settings Page ---------- */
+.settings-page {
+  max-width: 640px;
+}
+.settings-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+.success-message {
+  background: #e6f7e6;
+  color: #166534;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 /* ---------- LINE / Mobile ---------- */
 @media (max-width: 768px) {
   .front-content {

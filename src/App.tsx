@@ -10,6 +10,7 @@ import DashboardPage from './pages/admin/DashboardPage'
 import CategoriesPage from './pages/admin/CategoriesPage'
 import ProductsPage from './pages/admin/ProductsPage'
 import ProductFormPage from './pages/admin/ProductFormPage'
+import SettingsPage from './pages/admin/SettingsPage'
 
 const App: React.FC = () => {
   return (
@@ -30,6 +31,7 @@ const App: React.FC = () => {
           <Route path="products" element={<ProductsPage />} />
           <Route path="products/new" element={<ProductFormPage />} />
           <Route path="products/edit/:productId" element={<ProductFormPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

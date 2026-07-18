@@ -133,7 +133,7 @@ export async function fetchAncestors(
 
   // 逐層往上找（最多 10 層防止無限迴圈）
   for (let i = 0; i < 10; i++) {
-    const cat = currentCategory ?? (await fetchCategory(currentId!))
+    const cat: Category | null = currentCategory ?? (await fetchCategory(currentId!))
     if (!cat) break
     ancestors.unshift(cat)
     if (cat.parent_id === null) break

@@ -36,9 +36,25 @@ export interface ProductImage {
   created_at: string
 }
 
+export interface Setting {
+  key: string
+  value: string
+  created_at: string
+  updated_at: string
+}
+
 export interface CategoryTreeNode extends Category {
   children: CategoryTreeNode[]
   depth: number
+}
+
+/** 將設定陣列轉為 key-value 物件 */
+export function settingsToMap(settings: Setting[]): Record<string, string> {
+  const map: Record<string, string> = {}
+  for (const s of settings) {
+    map[s.key] = s.value
+  }
+  return map
 }
 
 /** 遞迴建立分類樹 */

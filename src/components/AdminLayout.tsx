@@ -54,6 +54,9 @@ const AdminLayout: React.FC = () => {
           <a href="/admin/products" className="admin-nav-item">
             產品管理
           </a>
+          <a href="/admin/settings" className="admin-nav-item">
+            網站設定
+          </a>
         </nav>
         <div className="admin-sidebar-footer">
           <button className="btn btn-secondary" onClick={handleLogout}>
