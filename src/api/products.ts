@@ -30,7 +30,7 @@ export async function fetchProductsByCategory(
 ): Promise<Product[]> {
   let query = supabase
     .from('products')
-    .select('*')
+    .select('*, product_images(*)')
     .eq('category_id', categoryId)
     .order('sort_order', { ascending: true })
 
@@ -40,7 +40,10 @@ export async function fetchProductsByCategory(
 
   const { data, error } = await query
   if (error) throw error
-  return data ?? []
+  return (data ?? []).map((item: any) => ({
+    ...item,
+    images: item.product_images ?? [],
+  }))
 }
 
 /** 取得單一產品（含圖片） */
@@ -188,13 +191,16 @@ export async function searchProducts(
   return data ?? []
 }
 
-/** 取得所有產品（後台用） */
+/** 取得所有產品（後台用，含主圖） */
 export async function fetchAllProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('*, product_images(*)')
     .order('created_at', { ascending: false })
 
   if (error) throw error
-  return data ?? []
+  return (data ?? []).map((item: any) => ({
+    ...item,
+    images: item.product_images ?? [],
+  }))
 }

@@ -110,6 +110,7 @@ const ProductsPage: React.FC = () => {
               <th>名稱</th>
               <th>分類</th>
               <th>狀態</th>
+              <th>照片數</th>
               <th>建立日期</th>
               <th>操作</th>
             </tr>
@@ -118,10 +119,19 @@ const ProductsPage: React.FC = () => {
             {filtered.map((p) => (
               <tr key={p.id}>
                 <td>
-                  <div className="table-thumb" />
+                  {p.images && p.images.length > 0 ? (
+                    <img
+                      src={p.images[0].image_url}
+                      alt={p.name}
+                      className="table-thumb-img"
+                    />
+                  ) : (
+                    <div className="table-thumb" />
+                  )}
                 </td>
                 <td>{p.name}</td>
                 <td>{getCategoryName(p.category_id)}</td>
+                <td>{p.images?.length ?? 0}</td>
                 <td>
                   <span
                     className={`status-badge ${
