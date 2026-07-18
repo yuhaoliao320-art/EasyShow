@@ -1,6 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { fetchAllProducts, deleteProduct } from '../../api/products'
+import {
+  fetchAllProducts,
+  deleteProduct,
+  uploadImage,
+  updateProductImages,
+} from '../../api/products'
 import { fetchAllCategories } from '../../api/categories'
 import type { Product, Category } from '../../types'
 import ProductFormModal from '../../components/ProductFormModal'
@@ -14,6 +19,8 @@ const ProductsPage: React.FC = () => {
   const [filterCatId, setFilterCatId] = useState<string>('')
   const [searchParams] = useSearchParams()
   const [modalOpen, setModalOpen] = useState(false)
+  const [uploadingProductId, setUploadingProductId] = useState<number | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const catFilter = searchParams.get('category_id')
@@ -38,6 +45,37 @@ const ProductsPage: React.FC = () => {
   useEffect(() => {
     loadData()
   }, [])
+
+  const handleUploadClick = (productId: number) => {
+    setUploadingProductId(productId)
+    fileInputRef.current?.click()
+  }
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0 || uploadingProductId === null) return
+
+    const pid = uploadingProductId
+    setUploadingProductId(pid)
+
+    try {
+      const product = products.find((p) => p.id === pid)
+      const existingUrls = product?.images?.map((img) => img.image_url) ?? []
+
+      for (let i = 0; i < files.length; i++) {
+        const url = await uploadImage(files[i])
+        existingUrls.push(url)
+      }
+
+      await updateProductImages(pid, existingUrls)
+      loadData()
+    } catch (err: any) {
+      alert('上傳失敗：' + err.message)
+    } finally {
+      setUploadingProductId(null)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   const handleDelete = async (id: number) => {
     if (!confirm('確定要刪除此產品？')) return
@@ -135,20 +173,30 @@ const ProductsPage: React.FC = () => {
           <tbody>
             {filtered.map((p) => (
               <tr key={p.id}>
-                <td>
-                  {p.images && p.images.length > 0 ? (
-                    <img
-                      src={p.images[0].image_url}
-                      alt={p.name}
-                      className="table-thumb-img"
-                    />
-                  ) : (
-                    <div className="table-thumb" />
-                  )}
+                <td className="thumb-cell">
+                  <div className="thumb-wrapper">
+                    {p.images && p.images.length > 0 ? (
+                      <img
+                        src={p.images[0].image_url}
+                        alt={p.name}
+                        className="table-thumb-img"
+                      />
+                    ) : (
+                      <div className="table-thumb" />
+                    )}
+                    <button
+                      type="button"
+                      className="btn-thumb-upload"
+                      onClick={() => handleUploadClick(p.id)}
+                      disabled={uploadingProductId === p.id}
+                      title="上傳圖片"
+                    >
+                      {uploadingProductId === p.id ? '⏳' : '📷'}
+                    </button>
+                  </div>
                 </td>
                 <td>{p.name}</td>
                 <td>{getCategoryName(p.category_id)}</td>
-                <td>{p.images?.length ?? 0}</td>
                 <td>
                   <span
                     className={`status-badge ${
@@ -158,6 +206,7 @@ const ProductsPage: React.FC = () => {
                     {p.is_published ? '上架' : '下架'}
                   </span>
                 </td>
+                <td>{p.images?.length ?? 0}</td>
                 <td>{new Date(p.created_at).toLocaleDateString()}</td>
                 <td>
                   <Link
@@ -178,6 +227,17 @@ const ProductsPage: React.FC = () => {
           </tbody>
         </table>
       )}
+
+      {/* 隱藏的檔案選擇器 — 給列上的上傳按鈕使用 */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileSelected}
+        style={{ display: 'none' }}
+        disabled={uploadingProductId !== null}
+      />
 
       {modalOpen && (
         <ProductFormModal
