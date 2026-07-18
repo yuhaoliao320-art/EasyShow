@@ -39,7 +39,19 @@ const ProductDetailPage: React.FC = () => {
       .finally(() => setLoading(false))
   }, [id])
 
-  if (loading) return <div className="loading">載入中...</div>
+  if (loading) {
+    return (
+      <div className="loading-skeleton" style={{ maxWidth: 800, margin: '0 auto' }}>
+        <div className="skeleton skeleton-text-sm" style={{ marginBottom: 16 }} />
+        <div className="skeleton skeleton-text-lg" />
+        <div className="skeleton skeleton-text" style={{ width: '90%' }} />
+        <div className="skeleton skeleton-text" style={{ width: '70%' }} />
+        <div style={{ marginTop: 24 }}>
+          <div className="skeleton" style={{ width: '100%', height: 400, borderRadius: 8 }} />
+        </div>
+      </div>
+    )
+  }
   if (error) return <div className="error">{error}</div>
   if (!product) return <div className="error">找不到此產品</div>
 

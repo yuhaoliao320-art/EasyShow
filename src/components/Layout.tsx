@@ -67,7 +67,12 @@ const Layout: React.FC = () => {
           </div>
           <nav className="front-sidebar-nav">
             {loading ? (
-              <div className="sidebar-loading">載入中...</div>
+              <div className="sidebar-loading">
+                <div className="skeleton" style={{ height: 16, width: '80%', margin: '12px 16px' }} />
+                <div className="skeleton" style={{ height: 16, width: '60%', margin: '8px 16px' }} />
+                <div className="skeleton" style={{ height: 16, width: '70%', margin: '8px 16px' }} />
+                <div className="skeleton" style={{ height: 16, width: '50%', margin: '8px 16px' }} />
+              </div>
             ) : tree.length === 0 ? (
               <div className="sidebar-empty">尚無分類</div>
             ) : (

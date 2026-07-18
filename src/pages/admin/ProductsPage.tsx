@@ -62,7 +62,19 @@ const ProductsPage: React.FC = () => {
     return true
   })
 
-  if (loading) return <div className="loading">載入中...</div>
+  if (loading) {
+    return (
+      <div className="loading-skeleton">
+        <div className="skeleton skeleton-text-lg" />
+        <div className="skeleton skeleton-text-sm" style={{ marginBottom: 24 }} />
+        <div className="skeleton-grid">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="skeleton" style={{ height: 80, borderRadius: 8 }} />
+          ))}
+        </div>
+      </div>
+    )
+  }
   if (error) return <div className="error">{error}</div>
 
   return (

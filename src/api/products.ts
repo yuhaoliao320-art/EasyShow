@@ -1,26 +1,32 @@
 import { supabase } from './supabase'
 import type { Product, ProductImage } from '../types'
 
-const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY
-
-/** 上傳圖片到 imgbb */
+/** 上傳圖片 — 透過 Vercel Serverless Function 代理（Key 不進前端 bundle） */
 export async function uploadImage(file: File): Promise<string> {
-  const formData = new FormData()
-  formData.append('key', IMGBB_API_KEY)
-  formData.append('image', file)
+  // 將檔案轉為 base64，透過 JSON 傳給 Serverless Function
+  const base64 = await fileToBase64(file)
 
-  const res = await fetch('https://api.imgbb.com/1/upload', {
+  const res = await fetch('/api/upload', {
     method: 'POST',
-    body: formData,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: base64 }),
   })
 
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err?.error?.message ?? '圖片上傳失敗')
-  }
-
   const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data?.error?.message ?? '圖片上傳失敗')
+  }
   return data.data.url
+}
+
+/** 將 File 轉為 base64 data URL */
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+  })
 }
 
 /** 取得某分類下的產品列表 */
