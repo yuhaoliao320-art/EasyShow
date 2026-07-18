@@ -20,9 +20,15 @@ export default async function handler(
     return res.status(500).json({ error: 'Server configuration error' })
   }
 
+  // 移除 data URL 前綴（如 data:image/jpeg;base64,）
+  // ImgBB 只接受純 base64 字串
+  const rawBase64 = image.startsWith('data:')
+    ? image.replace(/^data:image\/[a-zA-Z]+;base64,/, '')
+    : image
+
   const formData = new FormData()
   formData.append('key', imgbbKey)
-  formData.append('image', image)
+  formData.append('image', rawBase64)
 
   const r = await fetch('https://api.imgbb.com/1/upload', {
     method: 'POST',
