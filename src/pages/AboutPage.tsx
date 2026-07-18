@@ -8,7 +8,8 @@ const AboutPage: React.FC = () => {
     company.company_description ||
     company.company_phone ||
     company.company_email ||
-    company.company_address
+    company.company_address ||
+    company['line-id']
 
   if (!hasAny) {
     return (
@@ -37,7 +38,7 @@ const AboutPage: React.FC = () => {
       )}
 
       {/* 聯絡資訊 */}
-      {(company.company_phone || company.company_email || company.company_address) && (
+      {(company.company_phone || company.company_email || company.company_address || company['line-id']) && (
         <section className="about-section about-contact">
           <h2 className="about-section-title">聯絡資訊</h2>
           <div className="about-contact-list">
@@ -69,6 +70,15 @@ const AboutPage: React.FC = () => {
                 <div className="about-contact-body">
                   <span className="about-contact-label">地址</span>
                   <span className="about-contact-value">{company.company_address}</span>
+                </div>
+              </div>
+            )}
+            {company['line-id'] && (
+              <div className="about-contact-item">
+                <span className="about-contact-icon">💬</span>
+                <div className="about-contact-body">
+                  <span className="about-contact-label">Line ID</span>
+                  <span className="about-contact-value">{company['line-id']}</span>
                 </div>
               </div>
             )}
