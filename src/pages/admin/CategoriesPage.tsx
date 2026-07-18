@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   fetchAllCategories,
   createCategory,
@@ -9,13 +8,15 @@ import {
   batchUpdateCategories,
 } from '../../api/categories'
 import { buildCategoryTree, type CategoryTreeNode } from '../../types'
+import ProductFormModal from '../../components/ProductFormModal'
 
 const CategoriesPage: React.FC = () => {
-  const navigate = useNavigate()
   const [tree, setTree] = useState<CategoryTreeNode[]>([])
   const [flatList, setFlatList] = useState<CategoryTreeNode[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [modalOpen, setModalOpen] = useState(false)
+  const [addProductCategoryId, setAddProductCategoryId] = useState<number | undefined>()
 
   // 拖放狀態
   const [dragOverId, setDragOverId] = useState<number | null>(null)
@@ -337,7 +338,10 @@ const CategoriesPage: React.FC = () => {
                 </button>
                 <button
                   className="btn btn-sm"
-                  onClick={() => navigate(`/admin/products/new?categoryId=${node.id}`)}
+                  onClick={() => {
+                    setAddProductCategoryId(node.id)
+                    setModalOpen(true)
+                  }}
                 >
                   + 新增商品
                 </button>
@@ -351,6 +355,14 @@ const CategoriesPage: React.FC = () => {
             </div>
           ))}
         </div>
+      )}
+      {modalOpen && (
+        <ProductFormModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onSuccess={loadData}
+          preselectedCategoryId={addProductCategoryId}
+        />
       )}
     </div>
   )

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { fetchAllProducts, deleteProduct } from '../../api/products'
 import { fetchAllCategories } from '../../api/categories'
 import type { Product, Category } from '../../types'
+import ProductFormModal from '../../components/ProductFormModal'
 
 const ProductsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([])
@@ -12,6 +13,7 @@ const ProductsPage: React.FC = () => {
   const [keyword, setKeyword] = useState('')
   const [filterCatId, setFilterCatId] = useState<string>('')
   const [searchParams] = useSearchParams()
+  const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
     const catFilter = searchParams.get('category_id')
@@ -81,9 +83,12 @@ const ProductsPage: React.FC = () => {
     <div className="admin-products-page">
       <div className="page-header">
         <h1>產品管理</h1>
-        <Link to="/admin/products/new" className="btn btn-primary">
+        <button
+          className="btn btn-primary"
+          onClick={() => setModalOpen(true)}
+        >
           + 新增產品
-        </Link>
+        </button>
       </div>
 
       <div className="filter-bar">
@@ -172,6 +177,14 @@ const ProductsPage: React.FC = () => {
             ))}
           </tbody>
         </table>
+      )}
+
+      {modalOpen && (
+        <ProductFormModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onSuccess={loadData}
+        />
       )}
     </div>
   )
