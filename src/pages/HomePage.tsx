@@ -12,7 +12,7 @@ const HomePage: React.FC = () => {
           <p className="home-hero-subtitle">
             為您的空間找到最適合的建材材料，從瓷磚、木地板到五金配件，一站瀏覽
           </p>
-          <Link to="/category/1" className="home-hero-cta">
+          <Link to="/browse" className="home-hero-cta">
             瀏覽所有產品
           </Link>
         </div>

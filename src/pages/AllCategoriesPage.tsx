@@ -1,9 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { useParams, useOutletContext } from 'react-router-dom'
-import { fetchAncestors } from '../api/categories'
+import { useOutletContext } from 'react-router-dom'
 import { fetchProductsByCategoryIds } from '../api/products'
-import { findCategoryNode, type CategoryTreeNode, type Category } from '../types'
-import Breadcrumb from '../components/Breadcrumb'
+import { type CategoryTreeNode } from '../types'
 import {
   buildHierarchy,
   fillProducts,
@@ -11,14 +9,11 @@ import {
   type MajorCategoryData,
 } from '../components/CategoryHierarchy'
 
-const CategoryPage: React.FC = () => {
-  const { categoryId } = useParams<{ categoryId: string }>()
-  const id = Number(categoryId)
+const AllCategoriesPage: React.FC = () => {
   const { tree } = useOutletContext<{ tree: CategoryTreeNode[] }>()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [ancestors, setAncestors] = useState<Category[]>([])
   const [majors, setMajors] = useState<MajorCategoryData[]>([])
   const [expandedMids, setExpandedMids] = useState<Set<number>>(new Set())
   const [expandedSmalls, setExpandedSmalls] = useState<Set<number>>(new Set())
@@ -42,46 +37,44 @@ const CategoryPage: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    if (!id || tree.length === 0) return
+    if (tree.length === 0) return
 
     setLoading(true)
     setError('')
-
-    const node = findCategoryNode(tree, id)
-    if (!node) {
-      setError('找不到此分類')
-      setLoading(false)
-      return
-    }
 
     let cancelled = false
 
     const load = async () => {
       try {
-        const ancs = await fetchAncestors(id)
-        if (cancelled) return
-        setAncestors(ancs)
+        // Collect all root categories as individual "majors"
+        // Each root's hierarchy is built independently
+        const allMajors: MajorCategoryData[] = []
+        const allCategoryIds: number[] = []
 
-        let rootNode: CategoryTreeNode
-        if (node.depth === 0) {
-          rootNode = node
-        } else if (ancs.length > 0) {
-          rootNode = findCategoryNode(tree, ancs[0].id) ?? node
-        } else {
-          rootNode = node
+        for (const rootNode of tree) {
+          const { majors: m, categoryIds: ids } = buildHierarchy(rootNode)
+          allMajors.push(...m)
+          allCategoryIds.push(...ids)
         }
 
-        const { majors: m, categoryIds: ids } = buildHierarchy(rootNode)
         if (cancelled) return
 
-        const productsMap = await fetchProductsByCategoryIds(ids)
+        // Fetch products for ALL leaf categories across all roots
+        const productsMap = await fetchProductsByCategoryIds(allCategoryIds)
         if (cancelled) return
 
-        const filled = fillProducts(m, productsMap, rootNode)
+        // Fill products for each root's hierarchy separately
+        const filledMajors: MajorCategoryData[] = []
+        for (const rootNode of tree) {
+          const { majors: m } = buildHierarchy(rootNode)
+          const filled = fillProducts(m, productsMap, rootNode)
+          filledMajors.push(...filled)
+        }
 
+        // Initialize expand/collapse state
         const midIds = new Set<number>()
         const smallIds = new Set<number>()
-        for (const major of filled) {
+        for (const major of filledMajors) {
           for (const mid of major.mids) {
             midIds.add(mid.id)
             for (const small of mid.smalls) {
@@ -90,7 +83,7 @@ const CategoryPage: React.FC = () => {
           }
         }
 
-        setMajors(filled)
+        setMajors(filledMajors)
         setExpandedMids(midIds)
         setExpandedSmalls(smallIds)
       } catch (err: any) {
@@ -102,12 +95,11 @@ const CategoryPage: React.FC = () => {
 
     load()
     return () => { cancelled = true }
-  }, [id, tree])
+  }, [tree])
 
   if (loading || tree.length === 0) {
     return (
       <div className="loading-skeleton">
-        <div className="skeleton skeleton-text-sm" style={{ marginBottom: 16 }} />
         <div className="skeleton" style={{ height: 56, marginBottom: 16, borderRadius: 0 }} />
         <div className="skeleton" style={{ height: 48, marginBottom: 8, borderRadius: 0 }} />
         <div className="skeleton" style={{ height: 200, marginBottom: 12, borderRadius: 10 }} />
@@ -120,20 +112,10 @@ const CategoryPage: React.FC = () => {
   if (error) return <div className="error">{error}</div>
 
   const visibleMajors = majors.filter((m) => m.totalCount > 0)
-  if (visibleMajors.length === 0) return <div className="error">此分類尚無產品</div>
+  if (visibleMajors.length === 0) return <div className="error">尚無產品</div>
 
   return (
     <div className="category-browse-page">
-      <Breadcrumb
-        items={[
-          { label: '首頁', href: '/' },
-          ...ancestors.map((a) => ({
-            label: a.name,
-            href: a.id === id ? undefined : `/category/${a.id}`,
-          })),
-        ]}
-      />
-
       {visibleMajors.map((major, majorIdx) => (
         <div key={major.id} className="h-major-section">
           <div className="h-major-banner">
@@ -159,4 +141,4 @@ const CategoryPage: React.FC = () => {
   )
 }
 
-export default CategoryPage
+export default AllCategoriesPage
