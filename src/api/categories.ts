@@ -92,18 +92,17 @@ export async function reorderCategory(
 export async function batchUpdateCategories(
   updates: { id: number; parent_id: number | null; sort_order: number }[]
 ): Promise<void> {
-  const { error } = await supabase
-    .from('categories')
-    .upsert(
-      updates.map((u) => ({
-        id: u.id,
-        parent_id: u.parent_id,
-        sort_order: u.sort_order,
-      })),
-      { onConflict: 'id' }
-    )
-
-  if (error) throw error
+  // 因 id 為 GENERATED ALWAYS AS IDENTITY，無法用 upsert，改為個別 UPDATE
+  const promises = updates.map((u) =>
+    supabase
+      .from('categories')
+      .update({ parent_id: u.parent_id, sort_order: u.sort_order })
+      .eq('id', u.id)
+  )
+  const results = await Promise.all(promises)
+  for (const result of results) {
+    if (result.error) throw result.error
+  }
 }
 
 /** 刪除分類（檢查是否有子分類或產品） */
