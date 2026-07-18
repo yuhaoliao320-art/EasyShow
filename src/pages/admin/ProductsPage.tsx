@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import {
   fetchAllProducts,
   deleteProduct,
@@ -19,6 +19,7 @@ const ProductsPage: React.FC = () => {
   const [filterCatId, setFilterCatId] = useState<string>('')
   const [searchParams] = useSearchParams()
   const [modalOpen, setModalOpen] = useState(false)
+  const [editProductId, setEditProductId] = useState<number | null>(null)
   const [uploadingProductId, setUploadingProductId] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -206,12 +207,16 @@ const ProductsPage: React.FC = () => {
                   >
                     {uploadingProductId === p.id ? '上傳中…' : '上傳圖片'}
                   </button>
-                  <Link
-                    to={`/admin/products/edit/${p.id}`}
+                  <button
+                    type="button"
                     className="btn btn-sm"
+                    onClick={() => {
+                      setEditProductId(p.id)
+                      setModalOpen(true)
+                    }}
                   >
                     編輯
-                  </Link>
+                  </button>
                   <button
                     className="btn btn-sm btn-danger"
                     onClick={() => handleDelete(p.id)}
@@ -239,8 +244,15 @@ const ProductsPage: React.FC = () => {
       {modalOpen && (
         <ProductFormModal
           open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          onSuccess={loadData}
+          onClose={() => {
+            setModalOpen(false)
+            setEditProductId(null)
+          }}
+          onSuccess={() => {
+            loadData()
+            setEditProductId(null)
+          }}
+          editProductId={editProductId}
         />
       )}
     </div>

@@ -1,5 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { createProduct, uploadImage } from '../api/products'
+import {
+  createProduct,
+  updateProduct,
+  updateProductImages,
+  uploadImage,
+  fetchProductWithImages,
+} from '../api/products'
 import { fetchAllCategories } from '../api/categories'
 import { buildCategoryTree, type CategoryTreeNode } from '../types'
 
@@ -9,6 +15,8 @@ interface ProductFormModalProps {
   onSuccess: () => void
   /** 預設分類 ID（從分類管理頁快速新增時帶入） */
   preselectedCategoryId?: number
+  /** 編輯模式：傳入產品 ID 會載入既有資料 */
+  editProductId?: number | null
 }
 
 const ProductFormModal: React.FC<ProductFormModalProps> = ({
@@ -16,6 +24,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   onClose,
   onSuccess,
   preselectedCategoryId,
+  editProductId,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -26,10 +35,13 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [imageUrls, setImageUrls] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [loadingEdit, setLoadingEdit] = useState(false)
   const [error, setError] = useState('')
   const [categoryOptions, setCategoryOptions] = useState<
     { id: number; label: string }[]
   >([])
+
+  const isEdit = !!editProductId
 
   // 當 modal 開啟時重設表單 & 載入分類選項
   useEffect(() => {
@@ -56,7 +68,26 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       flatten(tree)
       setCategoryOptions(flat)
     })
-  }, [open, preselectedCategoryId])
+
+    // 編輯模式：載入既有資料
+    if (editProductId) {
+      setLoadingEdit(true)
+      fetchProductWithImages(editProductId)
+        .then(({ product, images }) => {
+          if (!product) {
+            setError('找不到此產品')
+            return
+          }
+          setName(product.name)
+          setCategoryId(product.category_id)
+          setDescription(product.description)
+          setIsPublished(product.is_published)
+          setImageUrls(images.map((img) => img.image_url))
+        })
+        .catch((err) => setError(err.message))
+        .finally(() => setLoadingEdit(false))
+    }
+  }, [open, preselectedCategoryId, editProductId])
 
   // 點擊背景遮罩關閉
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -117,13 +148,23 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
     setSaving(true)
     try {
-      await createProduct({
-        name: name.trim(),
-        category_id: Number(categoryId),
-        description,
-        is_published: isPublished,
-        imageUrls,
-      })
+      if (isEdit && editProductId) {
+        await updateProduct(editProductId, {
+          name: name.trim(),
+          category_id: Number(categoryId),
+          description,
+          is_published: isPublished,
+        })
+        await updateProductImages(editProductId, imageUrls)
+      } else {
+        await createProduct({
+          name: name.trim(),
+          category_id: Number(categoryId),
+          description,
+          is_published: isPublished,
+          imageUrls,
+        })
+      }
       onSuccess()
       onClose()
     } catch (err: any) {
@@ -139,7 +180,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="modal-content product-form-modal">
         <div className="modal-header">
-          <h2>新增產品</h2>
+          <h2>{isEdit ? '編輯產品' : '新增產品'}</h2>
           <button
             type="button"
             className="modal-close"
@@ -150,6 +191,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           </button>
         </div>
 
+        {loadingEdit ? (
+          <div className="modal-body" style={{ textAlign: 'center', padding: '40px 20px' }}>
+            載入中...
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="modal-body">
           <div className="form-group">
             <label htmlFor="modal-name">
@@ -274,7 +320,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               className="btn btn-primary"
               disabled={saving}
             >
-              {saving ? '儲存中...' : '新增產品'}
+              {saving ? '儲存中...' : isEdit ? '儲存' : '新增產品'}
             </button>
             <button
               type="button"
@@ -285,6 +331,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   )
