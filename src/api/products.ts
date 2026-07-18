@@ -197,6 +197,39 @@ export async function searchProducts(
   return data ?? []
 }
 
+/** 批次取得多個分類下的產品（前台用，僅已上架）
+ * 回傳以 category_id 為 key 的 Map
+ */
+export async function fetchProductsByCategoryIds(
+  categoryIds: number[]
+): Promise<Record<number, Product[]>> {
+  if (categoryIds.length === 0) return {}
+
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, product_images(*)')
+    .in('category_id', categoryIds)
+    .eq('is_published', true)
+    .order('sort_order', { ascending: true })
+
+  if (error) throw error
+
+  const products = (data ?? []).map((item: any) => ({
+    ...item,
+    images: item.product_images ?? [],
+  }))
+
+  const grouped: Record<number, Product[]> = {}
+  for (const product of products) {
+    if (!grouped[product.category_id]) {
+      grouped[product.category_id] = []
+    }
+    grouped[product.category_id].push(product)
+  }
+
+  return grouped
+}
+
 /** 取得所有產品（後台用，含主圖） */
 export async function fetchAllProducts(): Promise<Product[]> {
   const { data, error } = await supabase

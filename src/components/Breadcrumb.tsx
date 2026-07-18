@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 interface BreadcrumbItem {
   label: string
@@ -17,7 +18,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
         return (
           <span key={idx} className="breadcrumb-item">
             {item.href && !isLast ? (
-              <a href={item.href}>{item.label}</a>
+              <Link to={item.href}>{item.label}</Link>
             ) : (
               <span className={isLast ? 'breadcrumb-current' : ''}>
                 {item.label}

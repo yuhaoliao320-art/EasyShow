@@ -676,6 +676,324 @@ textarea {
   color: var(--text);
 }
 
+/* ============================================
+   Category Browse Page — Hierarchical Layout
+   ============================================ */
+
+.category-browse-page {
+  max-width: 100%;
+  padding-bottom: 32px;
+}
+
+/* ---- Major Category Banner ---- */
+.h-major-section {
+  margin-bottom: 0;
+}
+
+.h-major-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 16px;
+  background: #f5f5f5;
+  border-top: 2px solid #ddd;
+  border-bottom: 2px solid #ddd;
+  margin-bottom: 0;
+}
+
+.h-major-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #222;
+  letter-spacing: 0.02em;
+}
+
+.h-major-count {
+  font-size: 14px;
+  color: #999;
+  font-weight: 400;
+}
+
+/* ---- Major-to-Major divider ---- */
+.h-major-divider {
+  height: 24px;
+}
+
+/* ---- Mid Category Section (sticky header) ---- */
+.h-mid-section {
+  margin-bottom: 0;
+}
+
+.h-mid-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  transition: background 0.15s;
+}
+
+.h-mid-header:hover {
+  background: rgba(245, 245, 245, 0.97);
+}
+
+.h-mid-arrow {
+  font-size: 11px;
+  color: #222;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.h-mid-arrow.expanded {
+  transform: rotate(0deg);
+}
+
+.h-mid-arrow:not(.expanded) {
+  transform: rotate(-90deg);
+}
+
+.h-mid-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #222;
+}
+
+.h-mid-body {
+  padding: 12px 0 0;
+}
+
+/* Dashed divider between mid-categories (section 3-7) */
+.h-mid-section + .h-mid-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px dashed #eee;
+}
+
+/* ---- Small Category Row ---- */
+.h-small-section {
+  margin-bottom: 16px;
+}
+
+.h-small-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.h-small-arrow {
+  font-size: 13px;
+  color: #999;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.h-small-arrow.expanded {
+  transform: rotate(90deg);
+}
+
+.h-small-arrow:not(.expanded) {
+  transform: rotate(0deg);
+}
+
+.h-small-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+}
+
+.h-small-count {
+  font-size: 12px;
+  color: #999;
+  margin-left: auto;
+}
+
+/* ---- Horizontal Scroll Container ---- */
+.h-scroll-wrapper {
+  padding: 0;
+}
+
+.h-scroll-container {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px;
+  padding-bottom: 8px; /* room for shadow visibility on last card */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.h-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Prevent page from scrolling horizontally when swiping cards */
+.front-content {
+  overscroll-behavior-x: none;
+}
+
+/* ---- Horizontal Product Card ---- */
+.h-product-card {
+  flex-shrink: 0;
+  width: 65vw;
+  max-width: 400px;
+  aspect-ratio: 4 / 5;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  scroll-snap-align: center;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: var(--text);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.h-product-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.h-product-card-image {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #f5f0eb;
+}
+
+.h-product-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.h-product-card:hover .h-product-card-image img {
+  transform: scale(1.06);
+}
+
+.h-product-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.h-product-card-name {
+  height: 20%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Dot Progress Indicator ---- */
+.h-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 16px 0;
+  min-height: 18px;
+}
+
+.h-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ddd;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.h-dot.active {
+  background: var(--primary);
+}
+
+.h-dot-more {
+  font-size: 10px;
+  color: #bbb;
+  margin-left: 2px;
+}
+
+/* ---- Mobile adjustments ---- */
+@media (max-width: 768px) {
+  .h-major-banner {
+    height: 48px;
+    padding: 0 12px;
+  }
+
+  .h-major-name {
+    font-size: 18px;
+  }
+
+  .h-major-count {
+    font-size: 12px;
+  }
+
+  .h-mid-header {
+    height: 42px;
+    padding: 0 12px;
+  }
+
+  .h-mid-name {
+    font-size: 16px;
+  }
+
+  .h-small-header {
+    padding: 0 12px;
+  }
+
+  .h-small-name {
+    font-size: 14px;
+  }
+
+  .h-scroll-container {
+    padding: 0 12px;
+  }
+
+  .h-product-card {
+    width: 65vw;
+  }
+
+  .h-product-card-name {
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+}
+
 /* ---------- Product Detail ---------- */
 .product-detail-page {
   max-width: 800px;
@@ -1255,7 +1573,7 @@ textarea {
   }
 }
 
-.front-content > .category-page,
+.front-content > .category-browse-page,
 .front-content > .home-page,
 .front-content > .product-detail-page {
   animation: fadeInUp 0.35s ease both;

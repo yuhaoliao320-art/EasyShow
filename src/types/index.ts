@@ -57,6 +57,19 @@ export function settingsToMap(settings: Setting[]): Record<string, string> {
   return map
 }
 
+/** 在樹中找出指定 ID 的節點 */
+export function findCategoryNode(
+  tree: CategoryTreeNode[],
+  id: number
+): CategoryTreeNode | null {
+  for (const node of tree) {
+    if (node.id === id) return node
+    const found = findCategoryNode(node.children, id)
+    if (found) return found
+  }
+  return null
+}
+
 /** 遞迴建立分類樹 */
 export function buildCategoryTree(
   categories: Category[],
