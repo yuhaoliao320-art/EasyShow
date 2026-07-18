@@ -991,6 +991,7 @@ textarea {
     padding: 0 12px;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    cursor: auto !important;
   }
   .h-scroll-container::-webkit-scrollbar {
     display: none;

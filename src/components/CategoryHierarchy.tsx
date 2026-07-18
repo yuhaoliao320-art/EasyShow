@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import type { CategoryTreeNode, Product } from '../types'
 import { Link } from 'react-router-dom'
 import HorizontalProductCard from './HorizontalProductCard'
+import { useDragScroll } from '../hooks/useDragScroll'
 
 /* ============================================
    Data Structures
@@ -181,6 +182,7 @@ export const SmallRow: React.FC<{
   if (small.products.length === 0) return null
 
   const rowId = `scroll-${small.id}`
+  const scrollRef = useDragScroll()
 
   return (
     <div className="h-small-section">
@@ -192,7 +194,7 @@ export const SmallRow: React.FC<{
       {expanded && (
         <>
           <div className="h-scroll-wrapper">
-            <div className="h-scroll-container" id={rowId}>
+            <div className="h-scroll-container" id={rowId} ref={scrollRef}>
               {small.products.map((product) => (
                 <HorizontalProductCard key={product.id} product={product} />
               ))}
