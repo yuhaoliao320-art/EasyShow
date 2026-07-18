@@ -39,6 +39,8 @@ export interface ProductImage {
 export interface Setting {
   key: string
   value: string
+  description: string | null
+  value_type: 'text' | 'number' | 'boolean' | 'email' | 'tel' | 'url' | 'textarea'
   created_at: string
   updated_at: string
 }

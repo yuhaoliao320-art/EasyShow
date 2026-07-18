@@ -1,45 +1,51 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { fetchAllSettings, upsertSettings } from '../../api/settings'
 import type { Setting } from '../../types'
 
-/** 設定欄位定義 */
-const SETTING_FIELDS: { key: string; label: string; type?: string }[] = [
-  { key: 'company_name', label: '公司名稱' },
-  { key: 'company_phone', label: '公司電話' },
-  { key: 'company_address', label: '公司地址' },
-  { key: 'company_email', label: '公司 Email', type: 'email' },
-  { key: 'company_description', label: '公司簡介', type: 'textarea' },
-]
-
 const SettingsPage: React.FC = () => {
-  const [settings, setSettings] = useState<Record<string, string>>({})
+  const [settings, setSettings] = useState<Setting[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  useEffect(() => {
-    loadSettings()
-  }, [])
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     setLoading(true)
+    setError(null)
     try {
       const data = await fetchAllSettings()
-      const map: Record<string, string> = {}
-      for (const s of data) {
-        map[s.key] = s.value
-      }
-      setSettings(map)
+      setSettings(data)
     } catch (err: any) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
+  }, [])
+
+  useEffect(() => {
+    loadSettings()
+  }, [loadSettings])
+
+  /** 根據 value_type 對應到 HTML input type */
+  const getInputType = (valueType: Setting['value_type']): string => {
+    switch (valueType) {
+      case 'number':
+        return 'number'
+      case 'email':
+        return 'email'
+      case 'tel':
+        return 'tel'
+      case 'url':
+        return 'url'
+      default:
+        return 'text'
+    }
   }
 
   const handleChange = (key: string, value: string) => {
-    setSettings((prev) => ({ ...prev, [key]: value }))
+    setSettings((prev) =>
+      prev.map((s) => (s.key === key ? { ...s, value } : s))
+    )
     setSuccess(false)
   }
 
@@ -48,9 +54,9 @@ const SettingsPage: React.FC = () => {
     setError(null)
     setSuccess(false)
     try {
-      const entries = SETTING_FIELDS.map((f) => ({
-        key: f.key,
-        value: settings[f.key] ?? '',
+      const entries = settings.map((s) => ({
+        key: s.key,
+        value: s.value,
       }))
       await upsertSettings(entries)
       setSuccess(true)
@@ -84,25 +90,49 @@ const SettingsPage: React.FC = () => {
         <div className="success-message">設定已成功儲存！</div>
       )}
 
+      {settings.length === 0 && !loading && (
+        <div className="empty-state">
+          <p>尚無任何設定，請先在資料庫中新增設定項目。</p>
+        </div>
+      )}
+
       <div className="settings-form">
-        {SETTING_FIELDS.map((field) => (
-          <div className="form-group" key={field.key}>
-            <label htmlFor={`setting-${field.key}`}>
-              {field.label}
+        {settings.map((setting) => (
+          <div className="form-group" key={setting.key}>
+            <label htmlFor={`setting-${setting.key}`}>
+              {setting.description || setting.key}
             </label>
-            {field.type === 'textarea' ? (
+            {setting.value_type === 'textarea' ? (
               <textarea
-                id={`setting-${field.key}`}
+                id={`setting-${setting.key}`}
                 rows={4}
-                value={settings[field.key] ?? ''}
-                onChange={(e) => handleChange(field.key, e.target.value)}
+                value={setting.value}
+                onChange={(e) => handleChange(setting.key, e.target.value)}
               />
+            ) : setting.value_type === 'boolean' ? (
+              <div className="setting-boolean">
+                <label className="toggle">
+                  <input
+                    type="checkbox"
+                    id={`setting-${setting.key}`}
+                    checked={setting.value === 'true'}
+                    onChange={(e) =>
+                      handleChange(setting.key, e.target.checked ? 'true' : 'false')
+                    }
+                  />
+                  <span className="toggle-slider" />
+                </label>
+                <span className="setting-boolean-label">
+                  {setting.value === 'true' ? '開啟' : '關閉'}
+                </span>
+              </div>
             ) : (
               <input
-                id={`setting-${field.key}`}
-                type={field.type ?? 'text'}
-                value={settings[field.key] ?? ''}
-                onChange={(e) => handleChange(field.key, e.target.value)}
+                id={`setting-${setting.key}`}
+                type={getInputType(setting.value_type)}
+                value={setting.value}
+                onChange={(e) => handleChange(setting.key, e.target.value)}
+                min={setting.value_type === 'number' ? 0 : undefined}
               />
             )}
           </div>
