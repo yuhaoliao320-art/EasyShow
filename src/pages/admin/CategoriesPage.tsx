@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   fetchAllCategories,
   createCategory,
@@ -9,6 +10,7 @@ import {
 import { buildCategoryTree, type CategoryTreeNode } from '../../types'
 
 const CategoriesPage: React.FC = () => {
+  const navigate = useNavigate()
   const [tree, setTree] = useState<CategoryTreeNode[]>([])
   const [flatList, setFlatList] = useState<CategoryTreeNode[]>([])
   const [loading, setLoading] = useState(true)
@@ -137,6 +139,12 @@ const CategoriesPage: React.FC = () => {
                   onClick={() => handleMove(node.id)}
                 >
                   移動
+                </button>
+                <button
+                  className="btn btn-sm"
+                  onClick={() => navigate(`/admin/products/new?categoryId=${node.id}`)}
+                >
+                  + 新增商品
                 </button>
                 <button
                   className="btn btn-sm btn-danger"

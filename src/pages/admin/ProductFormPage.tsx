@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   createProduct,
   updateProduct,
@@ -12,12 +12,17 @@ import { buildCategoryTree, type CategoryTreeNode } from '../../types'
 
 const ProductFormPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>()
+  const [searchParams] = useSearchParams()
   const isEdit = !!productId
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [name, setName] = useState('')
-  const [categoryId, setCategoryId] = useState<number | ''>('')
+  // 從 URL query 帶入預設分類（分類管理頁快速新增商品）
+  const initialCategoryId = searchParams.get('categoryId')
+  const [categoryId, setCategoryId] = useState<number | ''>(
+    initialCategoryId ? Number(initialCategoryId) : ''
+  )
   const [description, setDescription] = useState('')
   const [isPublished, setIsPublished] = useState(true)
   const [imageUrls, setImageUrls] = useState<string[]>([])
