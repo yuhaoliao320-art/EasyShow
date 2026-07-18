@@ -1953,13 +1953,6 @@ a.footer-contact-item:hover svg {
   .admin-content {
     padding: 16px;
   }
-  .admin-table {
-    font-size: 0.8rem;
-  }
-  .admin-table th,
-  .admin-table td {
-    padding: 8px 10px;
-  }
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1970,6 +1963,100 @@ a.footer-contact-item:hover svg {
   }
   .image-preview-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* ---- 產品管理：表格 → 卡片 ---- */
+  .admin-products-page .admin-table {
+    border: none;
+    background: transparent;
+  }
+  .admin-products-page .admin-table thead {
+    display: none;
+  }
+  .admin-products-page .admin-table tbody,
+  .admin-products-page .admin-table tr,
+  .admin-products-page .admin-table td {
+    display: block;
+  }
+  .admin-products-page .admin-table tr {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+  }
+  .admin-products-page .admin-table tr:last-child td {
+    border-bottom: none;
+  }
+  .admin-products-page .admin-table td {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: none;
+    font-size: 0.85rem;
+  }
+  .admin-products-page .admin-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    min-width: 48px;
+    flex-shrink: 0;
+  }
+  .admin-products-page .admin-table td[data-label="縮圖"]::before {
+    display: none;
+  }
+  .admin-products-page .admin-table td[data-label="縮圖"] {
+    justify-content: center;
+    padding-bottom: 8px;
+  }
+  .admin-products-page .admin-table td[data-label="操作"] {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+  .admin-products-page .action-cell::before {
+    width: 100%;
+    margin-bottom: 2px;
+  }
+}
+
+/* ---- 小螢幕：過濾列與頁首 ---- */
+@media (max-width: 560px) {
+  .admin-products-page .filter-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .admin-products-page .filter-input {
+    min-width: 0;
+    width: 100%;
+  }
+  .admin-products-page .filter-select {
+    width: 100%;
+  }
+  .admin-products-page .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .admin-products-page .page-header h1 {
+    text-align: center;
+  }
+  .admin-products-page .page-header .btn-primary {
+    width: 100%;
+  }
+  .admin-products-page .action-cell .btn-sm {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 8px;
+    font-size: 0.78rem;
   }
 }
 

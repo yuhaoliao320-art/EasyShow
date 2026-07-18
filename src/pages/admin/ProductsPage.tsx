@@ -174,7 +174,7 @@ const ProductsPage: React.FC = () => {
           <tbody>
             {filtered.map((p) => (
               <tr key={p.id}>
-                <td>
+                <td data-label="縮圖">
                   {p.images && p.images.length > 0 ? (
                     <img
                       src={p.images[0].image_url}
@@ -185,9 +185,9 @@ const ProductsPage: React.FC = () => {
                     <div className="table-thumb" />
                   )}
                 </td>
-                <td>{p.name}</td>
-                <td>{getCategoryName(p.category_id)}</td>
-                <td>
+                <td data-label="名稱">{p.name}</td>
+                <td data-label="分類">{getCategoryName(p.category_id)}</td>
+                <td data-label="狀態">
                   <span
                     className={`status-badge ${
                       p.is_published ? 'published' : 'unpublished'
@@ -196,9 +196,9 @@ const ProductsPage: React.FC = () => {
                     {p.is_published ? '上架' : '下架'}
                   </span>
                 </td>
-                <td>{p.images?.length ?? 0}</td>
-                <td>{new Date(p.created_at).toLocaleDateString()}</td>
-                <td className="action-cell">
+                <td data-label="照片數">{p.images?.length ?? 0}</td>
+                <td data-label="建立日期">{new Date(p.created_at).toLocaleDateString()}</td>
+                <td data-label="操作" className="action-cell">
                   <button
                     type="button"
                     className="btn btn-sm btn-upload"
