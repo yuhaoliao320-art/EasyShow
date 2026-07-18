@@ -1,71 +1,92 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 /**
  * 讓水平滾動容器支援滑鼠拖曳捲動（drag-to-scroll）
+ *
+ * 使用 callback ref，支援條件渲染（展開/收合）
  *
  * 用法：
  *   const scrollRef = useDragScroll()
  *   <div ref={scrollRef} className="h-scroll-container">...
  */
 export function useDragScroll() {
-  const ref = useRef<HTMLDivElement | null>(null)
   const state = useRef({
     isDown: false,
     startX: 0,
     scrollLeft: 0,
+    el: null as HTMLDivElement | null,
   })
 
+  // 滑鼠按下 — 綁在元素上（透過 callback ref）
   const onMouseDown = useCallback((e: MouseEvent) => {
-    const el = ref.current
+    const s = state.current
+    const el = s.el
     if (!el) return
 
-    // 忽略點擊連結或按鈕的事件
+    // 忽略點擊連結或按鈕
     const target = e.target as HTMLElement
     if (target.closest('a') || target.closest('button')) return
 
-    state.current.isDown = true
-    state.current.startX = e.pageX - el.offsetLeft
-    state.current.scrollLeft = el.scrollLeft
+    const rect = el.getBoundingClientRect()
+    s.isDown = true
+    s.startX = e.clientX - rect.left
+    s.scrollLeft = el.scrollLeft
     el.style.cursor = 'grabbing'
     el.style.userSelect = 'none'
   }, [])
 
-  const onMouseMove = useCallback((e: MouseEvent) => {
-    const el = ref.current
-    if (!state.current.isDown || !el) return
+  // callback ref — 元素出現/消失時自動重新綁定
+  const ref = useCallback((node: HTMLDivElement | null) => {
+    const s = state.current
 
+    // 移除舊元素的事件
+    if (s.el) {
+      s.el.removeEventListener('mousedown', onMouseDown)
+      s.el.style.cursor = ''
+    }
+
+    // 設定新元素
+    s.el = node
+
+    if (node) {
+      node.style.cursor = 'grab'
+      node.addEventListener('mousedown', onMouseDown)
+    }
+  }, [onMouseDown])
+
+  // 用 ref 存最新的 handler，避免 window 事件閉包過時
+  const moveRef = useRef((e: MouseEvent) => {
+    const s = state.current
+    const el = s.el
+    if (!s.isDown || !el) return
     e.preventDefault()
-    const x = e.pageX - el.offsetLeft
-    const walk = (x - state.current.startX) * 1.5 // 乘數控制滑動靈敏度
-    el.scrollLeft = state.current.scrollLeft - walk
-  }, [])
+    const rect = el.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const walk = (x - s.startX) * 1.5
+    el.scrollLeft = s.scrollLeft - walk
+  })
 
-  const onMouseUp = useCallback(() => {
-    const el = ref.current
-    if (!state.current.isDown || !el) return
-    state.current.isDown = false
+  const upRef = useRef(() => {
+    const s = state.current
+    const el = s.el
+    if (!s.isDown || !el) return
+    s.isDown = false
     el.style.cursor = 'grab'
     el.style.userSelect = ''
-  }, [])
+  })
 
+  // window 層級的事件（mousemove / mouseup）只需綁一次
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
+    const onMove = (e: MouseEvent) => moveRef.current(e)
+    const onUp = () => upRef.current()
 
-    // 預設顯示 grab 游標（桌面版）
-    el.style.cursor = 'grab'
-
-    el.addEventListener('mousedown', onMouseDown)
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
     return () => {
-      el.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-      el.style.cursor = ''
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
     }
-  }, [onMouseDown, onMouseMove, onMouseUp])
+  }, [])
 
   return ref
 }
