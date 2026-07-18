@@ -195,7 +195,7 @@ textarea {
   flex-shrink: 0;
 }
 .sidebar-toggle {
-  display: none;
+  display: flex;
   background: none;
   border: none;
   font-size: 1.3rem;
@@ -234,13 +234,24 @@ textarea {
 
 /* Sidebar */
 .front-sidebar {
-  width: var(--sidebar-w);
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  bottom: 0;
+  width: 280px;
   background: var(--surface);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   overflow-y: auto;
+  z-index: 300;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+}
+.front-sidebar.open {
+  transform: translateX(0);
 }
 .front-sidebar-header {
   padding: 16px 16px 8px;
@@ -268,9 +279,14 @@ textarea {
   text-align: center;
 }
 
-/* Sidebar overlay (mobile) */
+/* Sidebar overlay */
 .sidebar-overlay {
-  display: none;
+  display: block;
+  position: fixed;
+  inset: 0;
+  top: var(--header-h);
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 299;
 }
 
 /* Main content */
@@ -1469,32 +1485,9 @@ textarea {
     font-size: 0.82rem;
   }
 
-  /* Mobile sidebar: slide-in overlay */
-  .sidebar-toggle {
-    display: flex;
-  }
+  /* Mobile sidebar width adjustment */
   .front-sidebar {
-    position: fixed;
-    top: var(--header-h);
-    left: 0;
-    bottom: 0;
     width: 280px;
-    height: auto;
-    z-index: 300;
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
-  }
-  .front-sidebar.open {
-    transform: translateX(0);
-  }
-  .sidebar-overlay {
-    display: block;
-    position: fixed;
-    inset: 0;
-    top: var(--header-h);
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 299;
   }
 
   /* Admin sidebar becomes full-width top bar on mobile */
