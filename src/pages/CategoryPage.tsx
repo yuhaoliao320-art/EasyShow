@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { fetchAllCategories, fetchAncestors } from '../api/categories'
+import { useParams, Link, useOutletContext } from 'react-router-dom'
+import { fetchCategory, fetchAncestors } from '../api/categories'
 import { fetchProductsByCategory } from '../api/products'
-import { buildCategoryTree, type CategoryTreeNode, type Category, type Product } from '../types'
+import type { CategoryTreeNode, Category, Product } from '../types'
 import Breadcrumb from '../components/Breadcrumb'
-import CategoryTree from '../components/CategoryTree'
 import ProductCard from '../components/ProductCard'
+
+/** 遞迴展開 tree 為一維陣列 */
+function flattenTree(nodes: CategoryTreeNode[]): CategoryTreeNode[] {
+  const result: CategoryTreeNode[] = []
+  for (const node of nodes) {
+    result.push(node)
+    result.push(...flattenTree(node.children))
+  }
+  return result
+}
 
 const CategoryPage: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>()
@@ -13,10 +22,11 @@ const CategoryPage: React.FC = () => {
 
   const [category, setCategory] = useState<Category | null>(null)
   const [products, setProducts] = useState<Product[]>([])
-  const [tree, setTree] = useState<CategoryTreeNode[]>([])
   const [ancestors, setAncestors] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  const { tree } = useOutletContext<{ tree: CategoryTreeNode[] }>()
 
   useEffect(() => {
     if (!id) return
@@ -25,18 +35,16 @@ const CategoryPage: React.FC = () => {
     setError('')
 
     Promise.all([
-      fetchAllCategories(),
+      fetchCategory(id),
       fetchProductsByCategory(id),
       fetchAncestors(id),
     ])
-      .then(([categories, prods, ancs]) => {
-        const current = categories.find((c) => c.id === id)
-        if (!current) {
+      .then(([cat, prods, ancs]) => {
+        if (!cat) {
           setError('找不到此分類')
           return
         }
-        setCategory(current)
-        setTree(buildCategoryTree(categories))
+        setCategory(cat)
         setProducts(prods)
         setAncestors(ancs)
       })
@@ -48,10 +56,13 @@ const CategoryPage: React.FC = () => {
   if (error) return <div className="error">{error}</div>
   if (!category) return <div className="error">找不到此分類</div>
 
-  // 同層其他分類（推薦用）
-  const siblings = tree
-    .flatMap((n) => [n, ...n.children.flat()])
-    .filter((n) => n.parent_id === category.parent_id && n.id !== category.id)
+  // 從全部分類 tree 中找出同層其他分類（用於無產品時的推薦）
+  const siblings =
+    tree.length > 0
+      ? flattenTree(tree).filter(
+          (n) => n.parent_id === category.parent_id && n.id !== category.id
+        )
+      : []
 
   return (
     <div className="category-page">

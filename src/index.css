@@ -174,44 +174,113 @@ textarea {
   height: 18px;
 }
 
-/* ---------- Layout ---------- */
-.app-layout {
-  min-height: 100vh;
+/* ---------- Front Layout ---------- */
+.front-layout {
+  height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-.app-header {
+.front-header {
   height: var(--header-h);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
+  gap: 12px;
+  padding: 0 16px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  flex-shrink: 0;
 }
-.app-logo {
+.sidebar-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  border-radius: 6px;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
+}
+.sidebar-toggle:hover {
+  background: #f1f5f9;
+}
+.front-logo {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--primary);
+  margin-right: auto;
 }
-.admin-link {
+.front-admin-link {
   font-size: 0.85rem;
   color: var(--text-secondary);
+  flex-shrink: 0;
 }
 
-.app-main {
+/* Body: sidebar + content */
+.front-body {
   flex: 1;
-  padding: 20px;
-  max-width: var(--max-w);
-  margin: 0 auto;
-  width: 100%;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
 }
 
-.app-footer {
+/* Sidebar */
+.front-sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+.front-sidebar-header {
+  padding: 16px 16px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.front-sidebar-header h3 {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+.front-sidebar-nav {
+  flex: 1;
+  padding: 8px 0;
+  overflow-y: auto;
+}
+.sidebar-loading,
+.sidebar-empty {
+  padding: 20px 16px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Sidebar overlay (mobile) */
+.sidebar-overlay {
+  display: none;
+}
+
+/* Main content */
+.front-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+}
+
+.front-footer {
+  flex-shrink: 0;
   text-align: center;
   padding: 16px 20px;
   color: var(--text-secondary);
@@ -333,11 +402,6 @@ textarea {
 .home-hero p {
   color: var(--text-secondary);
 }
-.home-tree {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
 /* ---------- Category Page ---------- */
 .category-title {
   font-size: 1.4rem;
@@ -860,7 +924,7 @@ textarea {
 
 /* ---------- LINE / Mobile ---------- */
 @media (max-width: 768px) {
-  .app-main {
+  .front-content {
     padding: 16px;
   }
   .product-grid {
@@ -870,6 +934,34 @@ textarea {
   .product-card-name {
     font-size: 0.82rem;
     padding: 8px 10px;
+  }
+
+  /* Mobile sidebar: slide-in overlay */
+  .sidebar-toggle {
+    display: flex;
+  }
+  .front-sidebar {
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    height: auto;
+    z-index: 300;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+  }
+  .front-sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    top: var(--header-h);
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 299;
   }
 
   /* Admin sidebar becomes full-width top bar on mobile */
