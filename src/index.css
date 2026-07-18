@@ -1483,37 +1483,19 @@ textarea {
   flex-shrink: 0;
 }
 
-.thumb-cell {
-  min-width: 64px;
+.action-cell {
+  white-space: nowrap;
 }
 
-.thumb-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.btn-thumb-upload {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 24px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+.btn-upload {
   background: var(--surface);
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.12s;
-  line-height: 1;
-}
-.btn-thumb-upload:hover {
-  background: var(--primary-light);
+  color: var(--primary);
   border-color: var(--primary);
 }
-.btn-thumb-upload:disabled {
+.btn-upload:hover {
+  background: #f5efe8;
+}
+.btn-upload:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

@@ -173,27 +173,16 @@ const ProductsPage: React.FC = () => {
           <tbody>
             {filtered.map((p) => (
               <tr key={p.id}>
-                <td className="thumb-cell">
-                  <div className="thumb-wrapper">
-                    {p.images && p.images.length > 0 ? (
-                      <img
-                        src={p.images[0].image_url}
-                        alt={p.name}
-                        className="table-thumb-img"
-                      />
-                    ) : (
-                      <div className="table-thumb" />
-                    )}
-                    <button
-                      type="button"
-                      className="btn-thumb-upload"
-                      onClick={() => handleUploadClick(p.id)}
-                      disabled={uploadingProductId === p.id}
-                      title="上傳圖片"
-                    >
-                      {uploadingProductId === p.id ? '⏳' : '📷'}
-                    </button>
-                  </div>
+                <td>
+                  {p.images && p.images.length > 0 ? (
+                    <img
+                      src={p.images[0].image_url}
+                      alt={p.name}
+                      className="table-thumb-img"
+                    />
+                  ) : (
+                    <div className="table-thumb" />
+                  )}
                 </td>
                 <td>{p.name}</td>
                 <td>{getCategoryName(p.category_id)}</td>
@@ -208,7 +197,15 @@ const ProductsPage: React.FC = () => {
                 </td>
                 <td>{p.images?.length ?? 0}</td>
                 <td>{new Date(p.created_at).toLocaleDateString()}</td>
-                <td>
+                <td className="action-cell">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-upload"
+                    onClick={() => handleUploadClick(p.id)}
+                    disabled={uploadingProductId === p.id}
+                  >
+                    {uploadingProductId === p.id ? '上傳中…' : '上傳圖片'}
+                  </button>
                   <Link
                     to={`/admin/products/edit/${p.id}`}
                     className="btn btn-sm"
