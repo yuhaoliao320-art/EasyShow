@@ -847,7 +847,6 @@ textarea {
   gap: 10px;
   overflow-x: auto;
   overflow-y: hidden;
-  scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   padding: 0 16px;
   padding-bottom: 8px;
@@ -1034,6 +1033,7 @@ textarea {
     padding: 0 12px;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    scroll-snap-type: x mandatory;
   }
   .h-scroll-container::-webkit-scrollbar {
     display: none;
