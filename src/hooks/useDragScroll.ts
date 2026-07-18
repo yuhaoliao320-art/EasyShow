@@ -3,115 +3,106 @@ import { useCallback, useEffect, useRef } from 'react'
 /**
  * 讓水平滾動容器支援滑鼠拖曳捲動（drag-to-scroll）
  *
- * 支援條件渲染（展開/收合）、可點擊連結與按鈕：
- * - 輕輕點擊 → 正常觸發連結導航
- * - 按住拖動 → 捲動容器，不放開滑鼠就不會觸發連結
- *
- * 用法：
- *   const scrollRef = useDragScroll()
- *   <div ref={scrollRef} className="h-scroll-container">...
+ * 支援條件渲染、可點擊連結：
+ * - 輕按 → 正常導航
+ * - 按住拖曳 → 即時跟隨滑鼠捲動，放開不回彈
  */
 export function useDragScroll() {
-  const state = useRef({
-    isDown: false,
-    didDrag: false,
+  const s = useRef({
+    down: false,
+    dragged: false,
     startX: 0,
-    scrollLeft: 0,
+    startScroll: 0,
     el: null as HTMLDivElement | null,
   })
 
-  // ----- mousedown：一律開始追蹤 -----
-  const onMouseDown = useCallback((e: MouseEvent) => {
-    const s = state.current
-    const el = s.el
+  // ----- 按下：記錄起點 -----
+  const onDown = useCallback((e: MouseEvent) => {
+    const st = s.current
+    const el = st.el
     if (!el) return
 
-    const rect = el.getBoundingClientRect()
-    s.isDown = true
-    s.didDrag = false
-    s.startX = e.clientX - rect.left
-    s.scrollLeft = el.scrollLeft
-    el.style.cursor = 'grabbing'
-    el.style.userSelect = 'none'
-    // 拖曳期間關閉 scroll-snap，避免拉扯
-    el.style.scrollSnapType = 'none'
+    st.down = true
+    st.dragged = false
+    st.startX = e.clientX
+    st.startScroll = el.scrollLeft
   }, [])
 
-  // ----- mousemove：超過 5px 門檻才啟動拖曳 -----
-  const onMouseMove = useCallback((e: MouseEvent) => {
-    const s = state.current
-    const el = s.el
-    if (!s.isDown || !el) return
+  // ----- 移動：超過 5px 啟動拖曳 -----
+  const onMove = useCallback((e: MouseEvent) => {
+    const st = s.current
+    const el = st.el
+    if (!st.down || !el) return
 
-    const rect = el.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const delta = x - s.startX
+    const dx = e.clientX - st.startX
 
-    // 移動超過 5px 才算拖曳（避免誤觸）
-    if (Math.abs(delta) < 5 && !s.didDrag) return
+    // 未達門檻且尚未拖曳 => 忽略
+    if (Math.abs(dx) < 5 && !st.dragged) return
 
-    s.didDrag = true
+    if (!st.dragged) {
+      // **第一次跨過門檻**
+      st.dragged = true
+      el.style.pointerEvents = 'none' // 阻斷連結，避免 hover/selection 干擾
+      el.style.cursor = 'grabbing'
+      el.style.userSelect = 'none'
+      el.style.scrollSnapType = 'none'
+    }
+
     e.preventDefault()
-    el.scrollLeft = s.scrollLeft - delta * 1.5
+    el.scrollLeft = st.startScroll - dx
   }, [])
 
-  // ----- mouseup：若剛有拖曳，阻止點擊事件 -----
-  const onMouseUp = useCallback(() => {
-    const s = state.current
-    const el = s.el
-    if (!s.isDown || !el) return
+  // ----- 放開：清理 -----
+  const onUp = useCallback(() => {
+    const st = s.current
+    const el = st.el
+    if (!st.down || !el) return
 
-    s.isDown = false
-    el.style.cursor = 'grab'
-    el.style.userSelect = ''
-    // 恢復 scroll-snap
-    el.style.scrollSnapType = ''
+    st.down = false
 
-    if (s.didDrag) {
-      // 暫時擋住 pointer events，讓接下來冒泡的 click 被無效化
-      el.style.pointerEvents = 'none'
-      requestAnimationFrame(() => {
-        el.style.pointerEvents = ''
-      })
-      s.didDrag = false
+    if (st.dragged) {
+      el.style.pointerEvents = ''
+      el.style.cursor = ''
+      el.style.userSelect = ''
+      el.style.scrollSnapType = ''
+      st.dragged = false
     }
   }, [])
 
-  // ----- callback ref：元素出現/消失時自動綁定 mousedown -----
+  // ----- callback ref：元素出現時綁 mousedown -----
   const ref = useCallback((node: HTMLDivElement | null) => {
-    const s = state.current
+    const st = s.current
 
     // 清除舊元素
-    if (s.el) {
-      s.el.removeEventListener('mousedown', onMouseDown)
-      s.el.style.cursor = ''
-      s.el.style.pointerEvents = ''
+    if (st.el) {
+      st.el.removeEventListener('mousedown', onDown)
+      st.el.style.cursor = ''
+      st.el.style.pointerEvents = ''
+      st.el.style.scrollSnapType = ''
     }
 
-    s.el = node
+    st.el = node
 
     if (node) {
       node.style.cursor = 'grab'
-      node.addEventListener('mousedown', onMouseDown)
+      node.addEventListener('mousedown', onDown)
     }
-  }, [onMouseDown])
+  }, [onDown])
 
-  // ----- window 層級 mousemove / mouseup（只綁一次） -----
-  const moveRef = useRef(onMouseMove)
-  moveRef.current = onMouseMove
-
-  const upRef = useRef(onMouseUp)
-  upRef.current = onMouseUp
+  // ----- window 層級 mousemove / mouseup -----
+  const moveRef = useRef(onMove)
+  moveRef.current = onMove
+  const upRef = useRef(onUp)
+  upRef.current = onUp
 
   useEffect(() => {
-    const onMove = (e: MouseEvent) => moveRef.current(e)
-    const onUp = () => upRef.current()
-
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
+    const m = (e: MouseEvent) => moveRef.current(e)
+    const u = () => upRef.current()
+    window.addEventListener('mousemove', m)
+    window.addEventListener('mouseup', u)
     return () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
+      window.removeEventListener('mousemove', m)
+      window.removeEventListener('mouseup', u)
     }
   }, [])
 
