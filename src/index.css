@@ -838,6 +838,7 @@ textarea {
 
 /* ---- Horizontal Scroll Container ---- */
 .h-scroll-wrapper {
+  position: relative;
   padding: 0;
 }
 
@@ -849,7 +850,49 @@ textarea {
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   padding: 0 16px;
-  padding-bottom: 8px; /* room for shadow visibility on last card */
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+}
+
+/* 左右箭頭按鈕 */
+.h-scroll-arrow {
+  position: absolute;
+  top: 0;
+  bottom: 8px; /* match padding-bottom */
+  width: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  color: var(--text);
+  font-size: 1.6rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+
+.h-scroll-wrapper:hover .h-scroll-arrow {
+  opacity: 1;
+}
+
+.h-scroll-arrow:hover {
+  background: rgba(255, 255, 255, 0.97);
+}
+
+.h-scroll-arrow-left {
+  left: 0;
+  border-radius: 0 6px 6px 0;
+}
+
+.h-scroll-arrow-right {
+  right: 0;
+  border-radius: 6px 0 0 6px;
 }
 
 /* Prevent page from scrolling horizontally when swiping cards */
@@ -991,9 +1034,11 @@ textarea {
     padding: 0 12px;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    cursor: auto !important;
   }
   .h-scroll-container::-webkit-scrollbar {
+    display: none;
+  }
+  .h-scroll-arrow {
     display: none;
   }
 

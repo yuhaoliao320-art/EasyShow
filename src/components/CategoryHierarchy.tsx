@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import type { CategoryTreeNode, Product } from '../types'
 import { Link } from 'react-router-dom'
 import HorizontalProductCard from './HorizontalProductCard'
-import { useDragScroll } from '../hooks/useDragScroll'
 
 /* ============================================
    Data Structures
@@ -182,7 +181,25 @@ export const SmallRow: React.FC<{
   if (small.products.length === 0) return null
 
   const rowId = `scroll-${small.id}`
-  const scrollRef = useDragScroll()
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // 滑鼠滾輪 → 橫向捲動
+  const handleWheel = (e: React.WheelEvent) => {
+    const el = scrollRef.current
+    if (!el) return
+    e.preventDefault()
+    el.scrollLeft += e.deltaY
+  }
+
+  // 左右箭頭：捲動一個卡片寬度
+  const scrollByCard = (dir: -1 | 1) => {
+    const el = scrollRef.current
+    if (!el) return
+    const card = el.querySelector('.h-product-card') as HTMLElement | null
+    const gap = 10
+    const step = card ? card.offsetWidth + gap : el.clientWidth * 0.6
+    el.scrollBy({ left: dir * step, behavior: 'smooth' })
+  }
 
   return (
     <div className="h-small-section">
@@ -194,11 +211,30 @@ export const SmallRow: React.FC<{
       {expanded && (
         <>
           <div className="h-scroll-wrapper">
-            <div className="h-scroll-container" id={rowId} ref={scrollRef}>
+            <button
+              className="h-scroll-arrow h-scroll-arrow-left"
+              onClick={() => scrollByCard(-1)}
+              aria-label="向左捲動"
+            >
+              ‹
+            </button>
+            <div
+              className="h-scroll-container"
+              id={rowId}
+              ref={scrollRef}
+              onWheel={handleWheel}
+            >
               {small.products.map((product) => (
                 <HorizontalProductCard key={product.id} product={product} />
               ))}
             </div>
+            <button
+              className="h-scroll-arrow h-scroll-arrow-right"
+              onClick={() => scrollByCard(1)}
+              aria-label="向右捲動"
+            >
+              ›
+            </button>
           </div>
           <DotIndicator count={small.products.length} rowId={rowId} />
         </>
