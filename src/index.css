@@ -1308,6 +1308,41 @@ textarea {
   flex-wrap: wrap;
 }
 
+/* ---------- Drag & Drop (分類拖放) ---------- */
+.drag-handle {
+  cursor: grab;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  line-height: 1;
+  user-select: none;
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: opacity 0.12s;
+}
+.category-admin-row:hover .drag-handle {
+  opacity: 0.8;
+}
+.category-admin-row.dragging {
+  opacity: 0.5;
+  background: #f0ebe4;
+}
+.category-admin-row.dragging .drag-handle {
+  cursor: grabbing;
+}
+
+/* Drop position indicators */
+.category-admin-row.drop-before {
+  border-top: 3px solid var(--primary);
+}
+.category-admin-row.drop-after {
+  border-bottom: 3px solid var(--primary);
+}
+.category-admin-row.drop-child {
+  outline: 2px dashed var(--primary);
+  outline-offset: -2px;
+  background: #f5efe8;
+}
+
 /* Products Admin */
 .filter-bar {
   display: flex;
