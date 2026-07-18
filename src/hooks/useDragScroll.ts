@@ -33,6 +33,8 @@ export function useDragScroll() {
     s.scrollLeft = el.scrollLeft
     el.style.cursor = 'grabbing'
     el.style.userSelect = 'none'
+    // 拖曳期間關閉 scroll-snap，避免拉扯
+    el.style.scrollSnapType = 'none'
   }, [])
 
   // ----- mousemove：超過 5px 門檻才啟動拖曳 -----
@@ -62,6 +64,8 @@ export function useDragScroll() {
     s.isDown = false
     el.style.cursor = 'grab'
     el.style.userSelect = ''
+    // 恢復 scroll-snap
+    el.style.scrollSnapType = ''
 
     if (s.didDrag) {
       // 暫時擋住 pointer events，讓接下來冒泡的 click 被無效化
