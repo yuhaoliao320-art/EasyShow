@@ -117,20 +117,28 @@ export async function deleteCategory(id: number): Promise<{ ok: boolean; message
   return { ok: true }
 }
 
-/** 取得所有祖先分類（用於麵包屑） */
+/** 取得所有祖先分類（用於麵包屑）
+ *
+ * @param categoryId - 當前分類的 ID
+ * @param category - 若已取得當前分類資料，可傳入避免重複請求
+ */
 export async function fetchAncestors(
-  categoryId: number
+  categoryId: number,
+  category?: Category | null
 ): Promise<Category[]> {
   const ancestors: Category[] = []
   let currentId: number | null = categoryId
+  // 若外部已取得當前分類資料，直接使用，否則從第一層開始抓
+  let currentCategory: Category | null = category ?? null
 
   // 逐層往上找（最多 10 層防止無限迴圈）
   for (let i = 0; i < 10; i++) {
-    const cat = await fetchCategory(currentId!)
+    const cat = currentCategory ?? (await fetchCategory(currentId!))
     if (!cat) break
     ancestors.unshift(cat)
     if (cat.parent_id === null) break
     currentId = cat.parent_id
+    currentCategory = null // 下一輪需 fetch 上層
   }
 
   return ancestors

@@ -37,16 +37,16 @@ const CategoryPage: React.FC = () => {
     Promise.all([
       fetchCategory(id),
       fetchProductsByCategory(id),
-      fetchAncestors(id),
     ])
-      .then(([cat, prods, ancs]) => {
+      .then(([cat, prods]) => {
         if (!cat) {
           setError('找不到此分類')
           return
         }
         setCategory(cat)
         setProducts(prods)
-        setAncestors(ancs)
+        // 傳入已取得的 category，避免 fetchAncestors 內部重複請求第一層
+        return fetchAncestors(id, cat).then(setAncestors)
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
