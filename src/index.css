@@ -850,12 +850,6 @@ textarea {
   -webkit-overflow-scrolling: touch;
   padding: 0 16px;
   padding-bottom: 8px; /* room for shadow visibility on last card */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
-}
-
-.h-scroll-container::-webkit-scrollbar {
-  display: none;
 }
 
 /* Prevent page from scrolling horizontally when swiping cards */
@@ -995,6 +989,11 @@ textarea {
 
   .h-scroll-container {
     padding: 0 12px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .h-scroll-container::-webkit-scrollbar {
+    display: none;
   }
 
   .h-product-card {
