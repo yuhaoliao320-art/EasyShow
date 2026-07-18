@@ -183,13 +183,17 @@ export const SmallRow: React.FC<{
   const rowId = `scroll-${small.id}`
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // 滑鼠滾輪 → 橫向捲動
-  const handleWheel = (e: React.WheelEvent) => {
+  // 滑鼠滾輪 → 橫向捲動（原生 listener + passive:false 確保能 preventDefault）
+  useEffect(() => {
     const el = scrollRef.current
     if (!el) return
-    e.preventDefault()
-    el.scrollLeft += e.deltaY
-  }
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      el.scrollLeft += e.deltaY
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [expanded])
 
   // 左右箭頭：捲動一個卡片寬度
   const scrollByCard = (dir: -1 | 1) => {
@@ -222,7 +226,6 @@ export const SmallRow: React.FC<{
               className="h-scroll-container"
               id={rowId}
               ref={scrollRef}
-              onWheel={handleWheel}
             >
               {small.products.map((product) => (
                 <HorizontalProductCard key={product.id} product={product} />
