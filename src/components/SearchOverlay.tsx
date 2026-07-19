@@ -21,7 +21,8 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
   // 打開 overlay 時：鎖定 body 滾動、載入熱門分類
   useEffect(() => {
     if (isOpen) {
-      // 鎖定 body 滾動（支援手機版）
+      // 先捲到頂端，再鎖定 body 滾動
+      window.scrollTo(0, 0)
       const scrollY = window.scrollY
       document.body.style.position = 'fixed'
       document.body.style.top = `-${scrollY}px`
