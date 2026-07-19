@@ -26,7 +26,6 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
       document.body.style.position = 'fixed'
       document.body.style.top = `-${scrollY}px`
       document.body.style.width = '100%'
-      document.body.style.overflowY = 'scroll' /* 保留 scrollbar 避免畫面跳動 */
 
       // 載入頂層分類
       fetchAllCategories()
@@ -43,7 +42,6 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
       document.body.style.position = ''
       document.body.style.top = ''
       document.body.style.width = ''
-      document.body.style.overflowY = ''
       if (scrollY) {
         window.scrollTo(0, parseInt(scrollY.replace('-', '')) || 0)
       }
@@ -53,14 +51,16 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
       document.body.style.position = ''
       document.body.style.top = ''
       document.body.style.width = ''
-      document.body.style.overflowY = ''
     }
   }, [isOpen])
 
-  // 自動聚焦輸入框
+  // 自動聚焦輸入框（僅桌機版，手機版自動聚焦會觸發 iOS Safari 強制捲動導致 overlay 位移）
   useEffect(() => {
     if (isOpen) {
-      inputRef.current?.focus()
+      const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+      if (!isMobile) {
+        inputRef.current?.focus()
+      }
     }
   }, [isOpen])
 
@@ -140,7 +140,6 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
               placeholder="搜尋產品名稱..."
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              autoFocus
               enterKeyHint="search"
             />
             {keyword && (
