@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import type { CategoryTreeNode, Product } from '../types'
-import { Link } from 'react-router-dom'
 import HorizontalProductCard from './HorizontalProductCard'
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
+import { fetchPaginatedCategoryProducts } from '../api/products'
 
 /* ============================================
    Data Structures
@@ -11,6 +12,8 @@ export interface SmallCategoryData {
   id: number
   name: string
   products: Product[]
+  /** 此小分類的子樹所有分類 ID（含自身），用於分頁查詢產品 */
+  categoryIds: number[]
 }
 
 export interface MidCategoryData {
@@ -61,11 +64,21 @@ export function buildHierarchy(node: CategoryTreeNode): {
           for (const smallNode of midNode.children) {
             const allIds = collectAllIds(smallNode)
             allCategoryIds.push(...allIds)
-            smalls.push({ id: smallNode.id, name: smallNode.name, products: [] })
+            smalls.push({
+              id: smallNode.id,
+              name: smallNode.name,
+              products: [],
+              categoryIds: allIds,
+            })
           }
         } else {
           allCategoryIds.push(midNode.id)
-          smalls.push({ id: midNode.id, name: '全部', products: [] })
+          smalls.push({
+            id: midNode.id,
+            name: '全部',
+            products: [],
+            categoryIds: [midNode.id],
+          })
         }
 
         mids.push({ id: midNode.id, name: midNode.name, smalls })
@@ -75,7 +88,14 @@ export function buildHierarchy(node: CategoryTreeNode): {
       mids.push({
         id: majorNode.id,
         name: majorNode.name,
-        smalls: [{ id: majorNode.id, name: '全部', products: [] }],
+        smalls: [
+          {
+            id: majorNode.id,
+            name: '全部',
+            products: [],
+            categoryIds: [majorNode.id],
+          },
+        ],
       })
     }
 
@@ -170,7 +190,7 @@ export const DotIndicator: React.FC<{ count: number; rowId: string }> = ({ count
 }
 
 /* ============================================
-   Small Category Row
+   Small Category Row — Infinite Scroll
    ============================================ */
 
 export const SmallRow: React.FC<{
@@ -178,10 +198,50 @@ export const SmallRow: React.FC<{
   expanded: boolean
   onToggle: () => void
 }> = ({ small, expanded, onToggle }) => {
-  if (small.products.length === 0) return null
-
   const rowId = `scroll-${small.id}`
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+
+  // 無限滾動：分批載入產品
+  const [initialized, setInitialized] = useState(false)
+  const [hidden, setHidden] = useState(false)
+
+  const fetchProducts = useCallback(
+    (params: { limit: number; offset: number; signal?: AbortSignal }) =>
+      fetchPaginatedCategoryProducts(small.categoryIds, {
+        limit: params.limit,
+        offset: params.offset,
+      }),
+    [small.categoryIds]
+  )
+
+  const {
+    items: loadedProducts,
+    hasMore,
+    loading,
+    error,
+    loadMore,
+    retry,
+    sentinelRef,
+    containerRef,
+  } = useInfiniteScroll<Product>(fetchProducts, { pageSize: 12 })
+
+  // 首次展開時自動載入第一頁
+  useEffect(() => {
+    if (expanded && !initialized) {
+      setInitialized(true)
+      loadMore()
+    }
+  }, [expanded, initialized, loadMore])
+
+  // 載入完成後若無產品則隱藏
+  useEffect(() => {
+    if (!loading && initialized && !hasMore && loadedProducts.length === 0) {
+      setHidden(true)
+    }
+  }, [loading, initialized, hasMore, loadedProducts.length])
+
+  // 完全隱藏無產品的分類
+  if (hidden) return null
 
   // 左右箭頭：捲動一個卡片寬度
   const scrollByCard = (dir: -1 | 1) => {
@@ -198,7 +258,9 @@ export const SmallRow: React.FC<{
       <div className="h-small-header" onClick={onToggle}>
         <span className={`h-small-arrow ${expanded ? 'expanded' : ''}`}>▸</span>
         <span className="h-small-name">{small.name}</span>
-        <span className="h-small-count">({small.products.length}項)</span>
+        <span className="h-small-count">
+          ({loadedProducts.length}{hasMore ? '+' : ''}項)
+        </span>
       </div>
       {expanded && (
         <>
@@ -213,11 +275,20 @@ export const SmallRow: React.FC<{
             <div
               className="h-scroll-container"
               id={rowId}
-              ref={scrollRef}
+              ref={(node) => {
+                scrollRef.current = node
+                containerRef(node)
+              }}
             >
-              {small.products.map((product) => (
+              {loadedProducts.map((product) => (
                 <HorizontalProductCard key={product.id} product={product} />
               ))}
+              {/* sentinel 元素：偵測是否滾到底部 */}
+              <div
+                ref={sentinelRef}
+                className="infinite-scroll-sentinel"
+                style={{ flexShrink: 0, width: 1, alignSelf: 'stretch' }}
+              />
             </div>
             <button
               className="h-scroll-arrow h-scroll-arrow-right"
@@ -227,7 +298,53 @@ export const SmallRow: React.FC<{
               ›
             </button>
           </div>
-          <DotIndicator count={small.products.length} rowId={rowId} />
+
+          {/* 載入中 spinner */}
+          {loading && loadedProducts.length > 0 && (
+            <div className="infinite-scroll-spinner">
+              <span className="infinite-scroll-spinner-icon" />
+              載入中…
+            </div>
+          )}
+
+          {/* 初始載入 spinner */}
+          {loading && loadedProducts.length === 0 && (
+            <div className="infinite-scroll-spinner">
+              <span className="infinite-scroll-spinner-icon" />
+              載入產品中…
+            </div>
+          )}
+
+          {/* 全部載完 */}
+          {!hasMore && !loading && loadedProducts.length > 0 && (
+            <div className="infinite-scroll-end">
+              已顯示全部 {loadedProducts.length} 項產品
+            </div>
+          )}
+
+          {/* 載入錯誤 */}
+          {error && (
+            <div className="infinite-scroll-error">
+              <span>載入失敗：{error}</span>
+              <button className="infinite-scroll-retry" onClick={retry}>
+                重試
+              </button>
+            </div>
+          )}
+
+          {/* 載入更多按鈕（fallback） */}
+          {!loading && hasMore && loadedProducts.length > 0 && (
+            <div style={{ textAlign: 'center', padding: '8px 16px' }}>
+              <button
+                className="btn btn-sm"
+                onClick={loadMore}
+              >
+                載入更多
+              </button>
+            </div>
+          )}
+
+          <DotIndicator count={loadedProducts.length} rowId={rowId} />
         </>
       )}
     </div>
@@ -245,8 +362,8 @@ export const MidSection: React.FC<{
   expandedSmalls: Set<number>
   onToggleSmall: (id: number) => void
 }> = ({ mid, expanded, onToggle, expandedSmalls, onToggleSmall }) => {
-  const visibleSmalls = mid.smalls.filter((s) => s.products.length > 0)
-  if (visibleSmalls.length === 0) return null
+  // 不再根據 products.length 過濾 — SmallRow 會自行管理載入狀態
+  if (mid.smalls.length === 0) return null
 
   return (
     <div className="h-mid-section">
@@ -256,7 +373,7 @@ export const MidSection: React.FC<{
       </div>
       {expanded && (
         <div className="h-mid-body">
-          {visibleSmalls.map((small) => (
+          {mid.smalls.map((small) => (
             <SmallRow
               key={small.id}
               small={small}

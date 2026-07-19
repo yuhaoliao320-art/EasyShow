@@ -1,20 +1,27 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchAllCategories } from '../api/categories'
-import type { Category } from '../types'
+import { fetchHotProducts } from '../api/products'
+import type { Category, Product } from '../types'
+import ProductCard from '../components/ProductCard'
 
 const HomePage: React.FC = () => {
   const [topCategories, setTopCategories] = useState<Category[]>([])
+  const [hotProducts, setHotProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchAllCategories()
-      .then((categories) => {
+    Promise.all([
+      fetchAllCategories(),
+      fetchHotProducts(),
+    ])
+      .then(([categories, hot]) => {
         // 只取最頂層分類（parent_id === null），依 sort_order 排序
         const tops = categories
           .filter((c) => c.parent_id === null)
           .sort((a, b) => a.sort_order - b.sort_order)
         setTopCategories(tops)
+        setHotProducts(hot)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -54,6 +61,19 @@ const HomePage: React.FC = () => {
           <p>透過分類瀏覽快速找到您需要的材料</p>
         </div>
       </section>
+
+      {/* Hot Products */}
+      {hotProducts.length > 0 && (
+        <section className="home-hot-products">
+          <h2 className="home-section-title">🔥 熱門產品</h2>
+          <p className="home-section-subtitle">最受歡迎的建材產品</p>
+          <div className="product-grid">
+            {hotProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Quick Links to major categories */}
       <section className="home-categories">

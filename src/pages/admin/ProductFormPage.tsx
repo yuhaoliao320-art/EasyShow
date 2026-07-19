@@ -9,6 +9,7 @@ import {
 } from '../../api/products'
 import { fetchAllCategories } from '../../api/categories'
 import { buildCategoryTree, type CategoryTreeNode } from '../../types'
+import LazyImage from '../../components/LazyImage'
 
 const ProductFormPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>()
@@ -223,7 +224,7 @@ const ProductFormPage: React.FC = () => {
             <div className="image-preview-grid">
               {imageUrls.map((url, idx) => (
                 <div key={idx} className="image-preview-item">
-                  <img src={url} alt={`照片 ${idx + 1}`} />
+                  <LazyImage src={url} alt={`照片 ${idx + 1}`} />
                   <div className="image-preview-actions">
                     {idx > 0 && (
                       <button

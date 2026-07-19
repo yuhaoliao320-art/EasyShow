@@ -3,11 +3,13 @@ import {
   createProduct,
   updateProduct,
   updateProductImages,
+  updateProductTags,
   uploadImage,
   fetchProductWithImages,
 } from '../api/products'
 import { fetchAllCategories } from '../api/categories'
 import { buildCategoryTree, type CategoryTreeNode } from '../types'
+import LazyImage from './LazyImage'
 
 interface ProductFormModalProps {
   open: boolean
@@ -33,6 +35,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [description, setDescription] = useState('')
   const [isPublished, setIsPublished] = useState(true)
   const [imageUrls, setImageUrls] = useState<string[]>([])
+  const [tags, setTags] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [loadingEdit, setLoadingEdit] = useState(false)
@@ -52,6 +55,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     setDescription('')
     setIsPublished(true)
     setImageUrls([])
+    setTags([])
     setUploading(false)
     setSaving(false)
     setError('')
@@ -83,6 +87,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           setDescription(product.description)
           setIsPublished(product.is_published)
           setImageUrls(images.map((img) => img.image_url))
+          setTags(product.tags ?? [])
         })
         .catch((err) => setError(err.message))
         .finally(() => setLoadingEdit(false))
@@ -156,6 +161,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           is_published: isPublished,
         })
         await updateProductImages(editProductId, imageUrls)
+        await updateProductTags(editProductId, tags)
       } else {
         await createProduct({
           name: name.trim(),
@@ -163,6 +169,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           description,
           is_published: isPublished,
           imageUrls,
+          tags,
         })
       }
       onSuccess()
@@ -264,7 +271,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               <div className="image-preview-grid">
                 {imageUrls.map((url, idx) => (
                   <div key={idx} className="image-preview-item">
-                    <img src={url} alt={`照片 ${idx + 1}`} />
+                    <LazyImage src={url} alt={`照片 ${idx + 1}`} />
                     <div className="image-preview-actions">
                       {idx > 0 && (
                         <button
@@ -299,6 +306,28 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="form-group">
+            <label>產品標籤</label>
+            <div className="tag-checkboxes">
+              {['hot', 'sale'].map((tag) => (
+                <label key={tag} className="checkbox-label tag-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={tags.includes(tag)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setTags((prev) => [...prev, tag])
+                      } else {
+                        setTags((prev) => prev.filter((t) => t !== tag))
+                      }
+                    }}
+                  />
+                  {tag === 'hot' ? '🔥 熱門' : '特價'}
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="form-group">

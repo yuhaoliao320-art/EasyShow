@@ -23,6 +23,7 @@ export interface Product {
   sort_order: number
   created_at: string
   updated_at: string
+  tags?: string[]
   // 前端擴充
   images?: ProductImage[]
   category_name?: string

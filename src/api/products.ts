@@ -82,6 +82,7 @@ export async function createProduct(params: {
   description?: string
   is_published?: boolean
   imageUrls: string[]
+  tags?: string[]
 }): Promise<Product> {
   // 先取同分類最大 sort_order
   const { data: siblings } = await supabase
@@ -102,6 +103,7 @@ export async function createProduct(params: {
       description: params.description ?? '',
       is_published: params.is_published ?? true,
       sort_order: maxOrder + 1,
+      tags: params.tags ?? [],
     })
     .select()
     .single()
@@ -174,6 +176,159 @@ export async function updateProductImages(
   }
 }
 
+/** 更新產品標籤 */
+export async function updateProductTags(
+  id: number,
+  tags: string[]
+): Promise<void> {
+  const { error } = await supabase
+    .from('products')
+    .update({ tags })
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+/** 取得所有已上架且被標記為 hot 的產品（限 8 筆） */
+export async function fetchHotProducts(): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, product_images(*)')
+    .contains('tags', ['hot'])
+    .eq('is_published', true)
+    .order('sort_order', { ascending: true })
+    .limit(8)
+
+  if (error) throw error
+  return (data ?? []).map((item: any) => ({
+    ...item,
+    images: item.product_images ?? [],
+  }))
+}
+
+/** 記錄產品瀏覽事件 */
+export async function trackProductView(
+  productId: number,
+  visitorId: string,
+  sessionId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('product_page_views')
+    .insert({
+      product_id: productId,
+      visitor_id: visitorId,
+      session_id: sessionId,
+    })
+
+  // 靜默失敗，不影響使用者體驗
+  if (error) {
+    console.warn('trackProductView error:', error.message)
+  }
+}
+
+/** 取得多個產品的瀏覽統計（回傳 product_id → { views, unique_visitors }） */
+export async function fetchProductsViewStats(
+  productIds: number[]
+): Promise<Record<number, { views: number; unique_visitors: number }>> {
+  if (productIds.length === 0) return {}
+
+  const { data, error } = await supabase
+    .from('product_page_views')
+    .select('product_id, visitor_id')
+    .in('product_id', productIds)
+
+  if (error) throw error
+
+  const result: Record<number, { views: number; unique_visitors: number }> = {}
+  for (const pid of productIds) {
+    result[pid] = { views: 0, unique_visitors: 0 }
+  }
+
+  const visitorSet: Record<number, Set<string>> = {}
+  for (const row of data ?? []) {
+    if (!result[row.product_id]) {
+      result[row.product_id] = { views: 0, unique_visitors: 0 }
+    }
+    result[row.product_id].views++
+    if (!visitorSet[row.product_id]) visitorSet[row.product_id] = new Set()
+    visitorSet[row.product_id].add(row.visitor_id)
+  }
+
+  for (const pid of Object.keys(visitorSet)) {
+    result[Number(pid)].unique_visitors = visitorSet[Number(pid)].size
+  }
+
+  return result
+}
+
+/** 取得熱門產品 Top N（依瀏覽次數排序） */
+export async function fetchTopViewedProducts(
+  limit: number = 10
+): Promise<{ product_id: number; views: number }[]> {
+  const { data, error } = await supabase
+    .from('product_page_views')
+    .select('product_id, count')
+    .limit(limit)
+    .order('count', { ascending: false })
+
+  if (error) {
+    // 若 count 無法使用，改用原始資料計算
+    const { data: raw, error: rawError } = await supabase
+      .from('product_page_views')
+      .select('product_id')
+
+    if (rawError) throw rawError
+
+    const countMap: Record<number, number> = {}
+    for (const row of raw ?? []) {
+      countMap[row.product_id] = (countMap[row.product_id] ?? 0) + 1
+    }
+
+    return Object.entries(countMap)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, limit)
+      .map(([product_id, views]) => ({ product_id: Number(product_id), views }))
+  }
+
+  return (data ?? []).map((row: any) => ({
+    product_id: row.product_id,
+    views: row.count,
+  }))
+}
+
+/** 取得近 N 日每日瀏覽趨勢 */
+export async function fetchDailyViewTrend(
+  days: number = 7
+): Promise<{ date: string; views: number }[]> {
+  const since = new Date()
+  since.setDate(since.getDate() - days)
+  since.setHours(0, 0, 0, 0)
+
+  const { data, error } = await supabase
+    .from('product_page_views')
+    .select('viewed_at')
+    .gte('viewed_at', since.toISOString())
+
+  if (error) throw error
+
+  const dayMap: Record<string, number> = {}
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    const key = d.toISOString().slice(0, 10)
+    dayMap[key] = 0
+  }
+
+  for (const row of data ?? []) {
+    const key = new Date(row.viewed_at).toISOString().slice(0, 10)
+    if (dayMap[key] !== undefined) {
+      dayMap[key]++
+    }
+  }
+
+  return Object.entries(dayMap).map(([date, views]) => ({ date, views }))
+}
+
 /** 刪除產品 */
 export async function deleteProduct(id: number): Promise<void> {
   // 圖片會因 ON DELETE CASCADE 自動刪除
@@ -199,19 +354,28 @@ export async function searchProducts(
 
 /** 批次取得多個分類下的產品（前台用，僅已上架）
  * 回傳以 category_id 為 key 的 Map
+ * 支援分頁：傳入 options.limit / options.offset 時使用 Supabase range()
+ * 保持向後相容（無傳 options 時回傳全部）
  */
 export async function fetchProductsByCategoryIds(
-  categoryIds: number[]
+  categoryIds: number[],
+  options?: { limit?: number; offset?: number }
 ): Promise<Record<number, Product[]>> {
   if (categoryIds.length === 0) return {}
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('products')
     .select('*, product_images(*)')
     .in('category_id', categoryIds)
     .eq('is_published', true)
     .order('sort_order', { ascending: true })
 
+  if (options?.limit !== undefined) {
+    const offset = options?.offset ?? 0
+    query = query.range(offset, offset + options.limit - 1)
+  }
+
+  const { data, error } = await query
   if (error) throw error
 
   const products = (data ?? []).map((item: any) => ({
@@ -228,6 +392,34 @@ export async function fetchProductsByCategoryIds(
   }
 
   return grouped
+}
+
+/** 分頁取得指定分類下的產品（扁平陣列 + 總數）
+ * 專為 SmallRow 無限滾動設計
+ */
+export async function fetchPaginatedCategoryProducts(
+  categoryIds: number[],
+  options: { limit: number; offset: number }
+): Promise<{ items: Product[]; total: number }> {
+  if (categoryIds.length === 0) return { items: [], total: 0 }
+
+  const { data, error, count } = await supabase
+    .from('products')
+    .select('*, product_images(*)', { count: 'exact', head: false })
+    .in('category_id', categoryIds)
+    .eq('is_published', true)
+    .order('sort_order', { ascending: true })
+    .range(options.offset, options.offset + options.limit - 1)
+
+  if (error) throw error
+
+  return {
+    items: (data ?? []).map((item: any) => ({
+      ...item,
+      images: item.product_images ?? [],
+    })),
+    total: count ?? 0,
+  }
 }
 
 /** 取得所有產品（後台用，含主圖） */

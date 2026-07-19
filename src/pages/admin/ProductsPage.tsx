@@ -5,6 +5,7 @@ import {
   deleteProduct,
   uploadImage,
   updateProductImages,
+  fetchProductsViewStats,
 } from '../../api/products'
 import { fetchAllCategories } from '../../api/categories'
 import type { Product, Category } from '../../types'
@@ -13,6 +14,9 @@ import ProductFormModal from '../../components/ProductFormModal'
 const ProductsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [viewStats, setViewStats] = useState<
+    Record<number, { views: number; unique_visitors: number }>
+  >({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [keyword, setKeyword] = useState('')
@@ -36,6 +40,12 @@ const ProductsPage: React.FC = () => {
       ])
       setProducts(prods)
       setCategories(cats)
+
+      // 批次取得瀏覽統計
+      const productIds = prods.map((p) => p.id)
+      if (productIds.length > 0) {
+        fetchProductsViewStats(productIds).then(setViewStats).catch(() => {})
+      }
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -167,6 +177,7 @@ const ProductsPage: React.FC = () => {
               <th>分類</th>
               <th>狀態</th>
               <th>照片數</th>
+              <th>瀏覽次數</th>
               <th>建立日期</th>
               <th>操作</th>
             </tr>
@@ -197,6 +208,11 @@ const ProductsPage: React.FC = () => {
                   </span>
                 </td>
                 <td data-label="照片數">{p.images?.length ?? 0}</td>
+                <td data-label="瀏覽次數">
+                  {viewStats[p.id]
+                    ? `${viewStats[p.id].views} / ${viewStats[p.id].unique_visitors}`
+                    : '-'}
+                </td>
                 <td data-label="建立日期">{new Date(p.created_at).toLocaleDateString()}</td>
                 <td data-label="操作" className="action-cell">
                   <button

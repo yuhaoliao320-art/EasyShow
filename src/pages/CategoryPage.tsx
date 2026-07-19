@@ -1,12 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useParams, useOutletContext } from 'react-router-dom'
 import { fetchAncestors } from '../api/categories'
-import { fetchProductsByCategoryIds } from '../api/products'
 import { findCategoryNode, type CategoryTreeNode, type Category } from '../types'
 import Breadcrumb from '../components/Breadcrumb'
 import {
   buildHierarchy,
-  fillProducts,
   MidSection,
   type MajorCategoryData,
 } from '../components/CategoryHierarchy'
@@ -71,26 +69,23 @@ const CategoryPage: React.FC = () => {
           rootNode = node
         }
 
-        const { majors: m, categoryIds: ids } = buildHierarchy(rootNode)
+        const { majors: m } = buildHierarchy(rootNode)
         if (cancelled) return
 
-        const productsMap = await fetchProductsByCategoryIds(ids)
-        if (cancelled) return
-
-        const filled = fillProducts(m, productsMap, rootNode)
-
+        // 不再一次載入所有產品 — SmallRow 會自行分頁載入
+        // 展開所有 mid 與 small（讓使用者可以看到完整分類結構）
         const midIds = new Set<number>()
         const smallIds = new Set<number>()
-        for (const major of filled) {
+        for (const major of m) {
           for (const mid of major.mids) {
             midIds.add(mid.id)
             for (const small of mid.smalls) {
-              if (small.products.length > 0) smallIds.add(small.id)
+              smallIds.add(small.id)
             }
           }
         }
 
-        setMajors(filled)
+        setMajors(m)
         setExpandedMids(midIds)
         setExpandedSmalls(smallIds)
       } catch (err: any) {
@@ -119,7 +114,7 @@ const CategoryPage: React.FC = () => {
 
   if (error) return <div className="error">{error}</div>
 
-  const visibleMajors = majors.filter((m) => m.totalCount > 0)
+  const visibleMajors = majors.filter((m) => m.mids.length > 0)
   if (visibleMajors.length === 0) return <div className="error">此分類尚無產品</div>
 
   return (
@@ -138,7 +133,7 @@ const CategoryPage: React.FC = () => {
         <div key={major.id} className="h-major-section">
           <div className="h-major-banner">
             <span className="h-major-name">【 {major.name} 】</span>
-            <span className="h-major-count">共 {major.totalCount} 款</span>
+            <span className="h-major-count">載入中…</span>
           </div>
 
           {major.mids.map((mid) => (

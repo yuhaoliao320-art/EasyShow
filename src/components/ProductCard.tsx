@@ -1,6 +1,8 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import type { Product } from '../types'
+import LazyImage from './LazyImage'
+import ProductBadge from './ProductBadge'
 
 interface ProductCardProps {
   product: Product
@@ -14,10 +16,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, categoryName }) => {
     <Link to={`/product/${product.id}`} className="product-card">
       <div className="product-card-image">
         {mainImage ? (
-          <img
+          <LazyImage
             src={mainImage}
             alt={product.name}
-            loading="lazy"
           />
         ) : (
           <div className="product-card-placeholder">
@@ -25,6 +26,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, categoryName }) => {
             <span>暫無圖片</span>
           </div>
         )}
+        <ProductBadge tags={product.tags} createdAt={product.created_at} />
         {categoryName && (
           <span className="product-card-badge">{categoryName}</span>
         )}

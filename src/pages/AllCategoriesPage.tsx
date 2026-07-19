@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { fetchProductsByCategoryIds } from '../api/products'
 import { type CategoryTreeNode } from '../types'
 import {
   buildHierarchy,
-  fillProducts,
   MidSection,
   type MajorCategoryData,
 } from '../components/CategoryHierarchy'
@@ -47,43 +45,29 @@ const AllCategoriesPage: React.FC = () => {
     const load = async () => {
       try {
         // Collect all root categories as individual "majors"
-        // Each root's hierarchy is built independently
         const allMajors: MajorCategoryData[] = []
-        const allCategoryIds: number[] = []
 
-        for (const rootNode of tree) {
-          const { majors: m, categoryIds: ids } = buildHierarchy(rootNode)
-          allMajors.push(...m)
-          allCategoryIds.push(...ids)
-        }
-
-        if (cancelled) return
-
-        // Fetch products for ALL leaf categories across all roots
-        const productsMap = await fetchProductsByCategoryIds(allCategoryIds)
-        if (cancelled) return
-
-        // Fill products for each root's hierarchy separately
-        const filledMajors: MajorCategoryData[] = []
         for (const rootNode of tree) {
           const { majors: m } = buildHierarchy(rootNode)
-          const filled = fillProducts(m, productsMap, rootNode)
-          filledMajors.push(...filled)
+          allMajors.push(...m)
         }
 
-        // Initialize expand/collapse state
+        if (cancelled) return
+
+        // 不再一次載入所有產品 — SmallRow 會自行分頁載入
+        // 展開所有 mid 與 small（讓使用者可以看到完整分類結構）
         const midIds = new Set<number>()
         const smallIds = new Set<number>()
-        for (const major of filledMajors) {
+        for (const major of allMajors) {
           for (const mid of major.mids) {
             midIds.add(mid.id)
             for (const small of mid.smalls) {
-              if (small.products.length > 0) smallIds.add(small.id)
+              smallIds.add(small.id)
             }
           }
         }
 
-        setMajors(filledMajors)
+        setMajors(allMajors)
         setExpandedMids(midIds)
         setExpandedSmalls(smallIds)
       } catch (err: any) {
@@ -111,7 +95,7 @@ const AllCategoriesPage: React.FC = () => {
 
   if (error) return <div className="error">{error}</div>
 
-  const visibleMajors = majors.filter((m) => m.totalCount > 0)
+  const visibleMajors = majors.filter((m) => m.mids.length > 0)
   if (visibleMajors.length === 0) return <div className="error">尚無產品</div>
 
   return (
@@ -120,7 +104,7 @@ const AllCategoriesPage: React.FC = () => {
         <div key={major.id} className="h-major-section">
           <div className="h-major-banner">
             <span className="h-major-name">【 {major.name} 】</span>
-            <span className="h-major-count">共 {major.totalCount} 款</span>
+            <span className="h-major-count">載入中…</span>
           </div>
 
           {major.mids.map((mid) => (

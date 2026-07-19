@@ -7,6 +7,7 @@ import AboutPage from './pages/AboutPage'
 import AllCategoriesPage from './pages/AllCategoriesPage'
 import CategoryPage from './pages/CategoryPage'
 import ProductDetailPage from './pages/ProductDetailPage'
+import SearchResultsPage from './pages/SearchResultsPage'
 import LoginPage from './pages/admin/LoginPage'
 import DashboardPage from './pages/admin/DashboardPage'
 import CategoriesPage from './pages/admin/CategoriesPage'
@@ -25,6 +26,7 @@ const App: React.FC = () => {
           <Route path="/browse" element={<AllCategoriesPage />} />
           <Route path="/category/:categoryId" element={<CategoryPage />} />
           <Route path="/product/:productId" element={<ProductDetailPage />} />
+          <Route path="/search" element={<SearchResultsPage />} />
         </Route>
 
         {/* 後台路由 */}

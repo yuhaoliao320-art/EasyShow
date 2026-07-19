@@ -4,6 +4,7 @@ import { fetchAllCategories } from '../api/categories'
 import { fetchAllSettings } from '../api/settings'
 import { buildCategoryTree, type CategoryTreeNode, settingsToMap } from '../types'
 import CategoryTree from './CategoryTree'
+import SearchBar from './SearchBar'
 
 const Layout: React.FC = () => {
   const [tree, setTree] = useState<CategoryTreeNode[]>([])
@@ -48,6 +49,7 @@ const Layout: React.FC = () => {
         <Link to="/" className="front-logo">
           {company.company_name || 'EasyShow'}
         </Link>
+        <SearchBar />
         <nav className="front-nav">
           <Link
             to="/about"

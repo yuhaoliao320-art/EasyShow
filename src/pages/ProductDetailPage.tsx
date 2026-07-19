@@ -4,6 +4,8 @@ import { fetchProductWithImages } from '../api/products'
 import { fetchAncestors } from '../api/categories'
 import type { Product, ProductImage, Category } from '../types'
 import Breadcrumb from '../components/Breadcrumb'
+import { useTrackView } from '../hooks/useTrackView'
+import LazyImage from '../components/LazyImage'
 
 const ProductDetailPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>()
@@ -17,6 +19,8 @@ const ProductDetailPage: React.FC = () => {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  useTrackView(id)
 
   useEffect(() => {
     if (!id) return
@@ -85,9 +89,10 @@ const ProductDetailPage: React.FC = () => {
               className="product-main-image"
               onClick={() => setLightboxOpen(true)}
             >
-              <img
+              <LazyImage
                 src={images[currentImageIndex].image_url}
                 alt={product.name}
+                eager
               />
               <div className="image-zoom-hint">點擊放大</div>
             </div>
@@ -102,7 +107,7 @@ const ProductDetailPage: React.FC = () => {
                     }`}
                     onClick={() => setCurrentImageIndex(idx)}
                   >
-                    <img src={img.image_url} alt={`${product.name} ${idx + 1}`} />
+                    <LazyImage src={img.image_url} alt={`${product.name} ${idx + 1}`} />
                   </button>
                 ))}
               </div>
