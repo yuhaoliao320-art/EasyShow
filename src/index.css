@@ -3025,6 +3025,17 @@ a.footer-contact-item:hover svg {
   text-align: center;
 }
 
+/* 深色 overlay 背景上，分類區塊文字改為淺色 */
+.search-overlay .search-overlay-categories-title {
+  color: #fff;
+}
+.search-overlay .search-overlay-categories-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+}
+.search-overlay .search-overlay-categories-loading {
+  color: rgba(255, 255, 255, 0.6);
+}
+
 .search-overlay-category-tags {
   display: flex;
   flex-wrap: wrap;
