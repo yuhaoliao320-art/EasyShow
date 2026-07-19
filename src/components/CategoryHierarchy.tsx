@@ -324,12 +324,7 @@ export const SmallRow: React.FC<{
             </div>
           )}
 
-          {/* 全部載完 */}
-          {!hasMore && !loading && loadedProducts.length > 0 && (
-            <div className="infinite-scroll-end">
-              已顯示全部 {loadedProducts.length} 項產品
-            </div>
-          )}
+
 
           {/* 載入錯誤 */}
           {error && (
