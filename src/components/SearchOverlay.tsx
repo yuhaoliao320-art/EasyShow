@@ -183,7 +183,16 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
                   </p>
                   <div className="product-grid search-overlay-product-grid">
                     {results.map((product) => (
-                      <ProductCard key={product.id} product={product} />
+                      <div
+                        key={product.id}
+                        role="presentation"
+                        onClick={() => {
+                          onClose()
+                          navigate(`/product/${product.id}`)
+                        }}
+                      >
+                        <ProductCard product={product} />
+                      </div>
                     ))}
                   </div>
                 </>
