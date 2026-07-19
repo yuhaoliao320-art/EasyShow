@@ -63,10 +63,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
   // 自動聚焦輸入框
   useEffect(() => {
     if (isOpen) {
-      const timer = setTimeout(() => {
-        inputRef.current?.focus()
-      }, 100)
-      return () => clearTimeout(timer)
+      inputRef.current?.focus()
     }
   }, [isOpen])
 
@@ -146,6 +143,8 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
               placeholder="搜尋產品名稱..."
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
+              autoFocus
+              enterKeyHint="search"
             />
             {keyword && (
               <button
@@ -194,9 +193,14 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
               )}
             </div>
           ) : (
-            /* 熱門分類 */
+            /* 初始引導 + 熱門分類 */
+            <>
+            <div className="search-overlay-initial-hint">
+              <span className="search-overlay-initial-hint-icon">🔍</span>
+              <p className="search-overlay-initial-hint-text">輸入產品名稱開始搜尋</p>
+            </div>
             <div className="search-overlay-categories">
-              <h3 className="search-overlay-categories-title">熱門分類</h3>
+              <h3 className="search-overlay-categories-title">或從熱門分類瀏覽</h3>
               <p className="search-overlay-categories-subtitle">
                 點擊分類快速瀏覽，或在上方輸入關鍵字搜尋
               </p>
@@ -221,6 +225,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
                 )}
               </div>
             </div>
+            </>
           )}
         </div>
       </div>

@@ -206,6 +206,24 @@ export async function fetchHotProducts(): Promise<Product[]> {
   }))
 }
 
+/** 取得最新上架產品（預設 8 筆） */
+export async function fetchLatestProducts(
+  limit: number = 8
+): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, product_images(*)')
+    .eq('is_published', true)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) throw error
+  return (data ?? []).map((item: any) => ({
+    ...item,
+    images: item.product_images ?? [],
+  }))
+}
+
 /** 記錄產品瀏覽事件 */
 export async function trackProductView(
   productId: number,

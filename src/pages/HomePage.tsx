@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
 import { fetchAllCategories } from '../api/categories'
-import { fetchHotProducts } from '../api/products'
+import { fetchHotProducts, fetchLatestProducts } from '../api/products'
 import type { Category, Product } from '../types'
 import ProductCard from '../components/ProductCard'
 import SearchOverlay from '../components/SearchOverlay'
@@ -10,33 +10,57 @@ const HomePage: React.FC = () => {
   const { setSidebarOpen } = useOutletContext<{ setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>> }>()
   const [topCategories, setTopCategories] = useState<Category[]>([])
   const [hotProducts, setHotProducts] = useState<Product[]>([])
+  const [hotSource, setHotSource] = useState<'hot' | 'latest'>('hot')
   const [loading, setLoading] = useState(true)
-  const [toastMessage, setToastMessage] = useState('')
   const [isSearchOpen, setSearchOpen] = useState(false)
+  const [showComingSoonMsg, setShowComingSoonMsg] = useState(false)
 
   useEffect(() => {
-    Promise.all([
-      fetchAllCategories(),
-      fetchHotProducts(),
-    ])
-      .then(([categories, hot]) => {
+    let cancelled = false
+
+    const load = async () => {
+      try {
+        const [categories, hot] = await Promise.all([
+          fetchAllCategories(),
+          fetchHotProducts(),
+        ])
+
+        if (cancelled) return
+
         // 只取最頂層分類（parent_id === null），依 sort_order 排序
         const tops = categories
           .filter((c) => c.parent_id === null)
           .sort((a, b) => a.sort_order - b.sort_order)
         setTopCategories(tops)
-        setHotProducts(hot)
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
+
+        if (hot.length > 0) {
+          setHotProducts(hot)
+          setHotSource('hot')
+        } else {
+          // 沒有熱門產品時，改顯示最新上架產品
+          const latest = await fetchLatestProducts()
+          if (!cancelled) {
+            setHotProducts(latest)
+            setHotSource('latest')
+          }
+        }
+      } catch {
+        // silent
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    load()
+    return () => { cancelled = true }
   }, [])
 
-  // Auto-dismiss toast after 3 seconds
+  // Auto-dismiss coming-soon message after 2.5 seconds
   useEffect(() => {
-    if (!toastMessage) return
-    const timer = setTimeout(() => setToastMessage(''), 3000)
+    if (!showComingSoonMsg) return
+    const timer = setTimeout(() => setShowComingSoonMsg(false), 2500)
     return () => clearTimeout(timer)
-  }, [toastMessage])
+  }, [showComingSoonMsg])
 
   return (
     <div className="home-page">
@@ -66,13 +90,18 @@ const HomePage: React.FC = () => {
           <p>瓷磚、木地板、五金、燈具等數百種產品</p>
         </div>
         <div
-          className="home-feature-item"
-          style={{ cursor: 'pointer' }}
-          onClick={() => setToastMessage('📸 實拍圖片功能開發中，敬請期待！')}
+          className="home-feature-item home-feature-coming-soon"
+          onClick={() => setShowComingSoonMsg(true)}
         >
           <span className="home-feature-icon">📸</span>
-          <h3>實拍圖片</h3>
+          <h3>
+            實拍圖片
+            <span className="coming-soon-badge">即將推出</span>
+          </h3>
           <p>每個產品提供高清實拍圖，細節一目瞭然</p>
+          {showComingSoonMsg && (
+            <div className="coming-soon-tooltip">此功能開發中，敬請期待！</div>
+          )}
         </div>
         <div
           className="home-feature-item"
@@ -90,8 +119,12 @@ const HomePage: React.FC = () => {
       {/* Hot Products */}
       {hotProducts.length > 0 && (
         <section className="home-hot-products">
-          <h2 className="home-section-title">🔥 熱門產品</h2>
-          <p className="home-section-subtitle">最受歡迎的建材產品</p>
+          <h2 className="home-section-title">
+            {hotSource === 'hot' ? '🔥 熱門產品' : '🆕 最新產品'}
+          </h2>
+          <p className="home-section-subtitle">
+            {hotSource === 'hot' ? '最受歡迎的建材產品' : '最新上架的建材產品'}
+          </p>
           <div className="product-grid">
             {hotProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
@@ -124,10 +157,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Toast */}
-      {toastMessage && (
-        <div className="toast toast-show">{toastMessage}</div>
-      )}
+      {/* Toast — 保留給未來使用 */}
 
       <SearchOverlay isOpen={isSearchOpen} onClose={() => setSearchOpen(false)} />
     </div>
