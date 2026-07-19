@@ -217,6 +217,12 @@ textarea {
   font-weight: 700;
   color: var(--primary);
   margin-right: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40%;
+  flex-shrink: 1;
+  min-width: 0;
 }
 .front-admin-link {
   font-size: 0.85rem;
@@ -2024,6 +2030,10 @@ a.footer-contact-item:hover svg {
     padding: 6px 8px;
     font-size: 0.8rem;
   }
+  .front-logo {
+    max-width: 35vw;
+    font-size: 1.1rem;
+  }
   .footer-inner {
     flex-direction: column;
     gap: 20px;
@@ -2465,6 +2475,10 @@ a.footer-contact-item:hover svg {
     max-width: none;
     margin: 0 4px;
   }
+  .front-logo {
+    max-width: 28vw;
+    font-size: 1rem;
+  }
 }
 
 /* ============================================
@@ -2666,11 +2680,12 @@ a.footer-contact-item:hover svg {
 
 @media (max-width: 480px) {
   .toast {
-    bottom: 20px;
+    top: 16px;
+    bottom: auto;
     padding: 10px 18px;
     font-size: 0.88rem;
     white-space: normal;
-    max-width: calc(100vw - 40px);
+    max-width: calc(100vw - 32px);
     text-align: center;
   }
 }
@@ -2897,13 +2912,20 @@ a.footer-contact-item:hover svg {
 /* Mobile */
 @media (max-width: 768px) {
   .search-overlay-content {
-    margin-top: 20px;
-    padding: 0 16px;
-    max-height: calc(100vh - 40px);
+    margin-top: 0;
+    padding: 0;
+    max-height: 100vh;
+    max-width: 100%;
   }
 
   .search-overlay-header {
+    padding: 12px 12px 0;
     gap: 8px;
+    margin-bottom: 0;
+  }
+
+  .search-overlay-body {
+    padding: 16px 12px 40px;
   }
 
   .search-overlay-input-wrapper {
