@@ -107,7 +107,7 @@ const Layout: React.FC = () => {
 
         {/* Main content */}
         <main className="front-content">
-          <Outlet context={{ tree, company }} />
+          <Outlet context={{ tree, company, setSidebarOpen }} />
         </main>
       </div>
 

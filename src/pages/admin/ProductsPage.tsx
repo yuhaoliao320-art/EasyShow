@@ -209,9 +209,9 @@ const ProductsPage: React.FC = () => {
                 </td>
                 <td data-label="照片數">{p.images?.length ?? 0}</td>
                 <td data-label="瀏覽次數">
-                  {viewStats[p.id]
-                    ? `${viewStats[p.id].views} / ${viewStats[p.id].unique_visitors}`
-                    : '-'}
+                  <span className="view-stats-compact">
+                    👁 {viewStats[p.id]?.views ?? 0} ({viewStats[p.id]?.unique_visitors ?? 0}人)
+                  </span>
                 </td>
                 <td data-label="建立日期">{new Date(p.created_at).toLocaleDateString()}</td>
                 <td data-label="操作" className="action-cell">
