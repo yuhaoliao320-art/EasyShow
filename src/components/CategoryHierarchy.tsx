@@ -55,9 +55,8 @@ export function buildHierarchy(node: CategoryTreeNode): {
 } {
   const allCategoryIds: number[] = []
 
-  const majors: MajorCategoryData[] = (
-    node.children.length > 0 ? node.children : [node]
-  ).map((majorNode) => {
+  // 傳入的 node 本身即為大分類；其子節點以中類（Mid）呈現
+  const majors: MajorCategoryData[] = [node].map((majorNode) => {
     const mids: MidCategoryData[] = []
 
     if (majorNode.children.length > 0) {
