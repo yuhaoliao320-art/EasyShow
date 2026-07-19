@@ -49,7 +49,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ className }) => {
         </button>
       )}
       <button
-        className="search-bar-btn"
         onClick={handleSubmit}
         aria-label="搜尋"
         type="button"

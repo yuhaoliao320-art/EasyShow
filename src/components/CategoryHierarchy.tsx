@@ -20,6 +20,8 @@ export interface MidCategoryData {
   id: number
   name: string
   smalls: SmallCategoryData[]
+  /** 葉中類（無子分類）：直接查詢產品的分類 ID */
+  leafCategoryIds?: number[]
 }
 
 export interface MajorCategoryData {
@@ -27,6 +29,8 @@ export interface MajorCategoryData {
   name: string
   mids: MidCategoryData[]
   totalCount: number
+  /** 葉大類（無子分類）：直接查詢產品的分類 ID */
+  leafCategoryIds?: number[]
 }
 
 /* ============================================
@@ -71,35 +75,30 @@ export function buildHierarchy(node: CategoryTreeNode): {
               categoryIds: allIds,
             })
           }
+          mids.push({ id: midNode.id, name: midNode.name, smalls })
         } else {
+          // 葉中類：不建立假的「全部」小分類
           allCategoryIds.push(midNode.id)
-          smalls.push({
+          mids.push({
             id: midNode.id,
-            name: '全部',
-            products: [],
-            categoryIds: [midNode.id],
+            name: midNode.name,
+            smalls: [],
+            leafCategoryIds: [midNode.id],
           })
         }
-
-        mids.push({ id: midNode.id, name: midNode.name, smalls })
       }
     } else {
+      // 葉大類：不建立假的 mid/small 階層
       allCategoryIds.push(majorNode.id)
-      mids.push({
-        id: majorNode.id,
-        name: majorNode.name,
-        smalls: [
-          {
-            id: majorNode.id,
-            name: '全部',
-            products: [],
-            categoryIds: [majorNode.id],
-          },
-        ],
-      })
     }
 
-    return { id: majorNode.id, name: majorNode.name, mids, totalCount: 0 }
+    return {
+      id: majorNode.id,
+      name: majorNode.name,
+      mids,
+      totalCount: 0,
+      leafCategoryIds: majorNode.children.length > 0 ? undefined : [majorNode.id],
+    }
   })
 
   return { majors, categoryIds: allCategoryIds }
@@ -197,7 +196,9 @@ export const SmallRow: React.FC<{
   small: SmallCategoryData
   expanded: boolean
   onToggle: () => void
-}> = ({ small, expanded, onToggle }) => {
+  onCountChange?: (smallId: number, count: number) => void
+  hideHeader?: boolean
+}> = ({ small, expanded, onToggle, onCountChange, hideHeader = false }) => {
   const rowId = `scroll-${small.id}`
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
@@ -227,11 +228,11 @@ export const SmallRow: React.FC<{
 
   // 首次展開時自動載入第一頁
   useEffect(() => {
-    if (expanded && !initialized) {
+    if ((expanded || hideHeader) && !initialized) {
       setInitialized(true)
       loadMore()
     }
-  }, [expanded, initialized, loadMore])
+  }, [expanded, initialized, loadMore, hideHeader])
 
   // 載入完成後若無產品則隱藏
   useEffect(() => {
@@ -239,6 +240,13 @@ export const SmallRow: React.FC<{
       setHidden(true)
     }
   }, [loading, initialized, hasMore, loadedProducts.length])
+
+  // 有產品載入時，向上回報已載入數量
+  useEffect(() => {
+    if ((expanded || hideHeader) && initialized && onCountChange) {
+      onCountChange(small.id, loadedProducts.length)
+    }
+  }, [loadedProducts.length, expanded, initialized, hideHeader, onCountChange, small.id])
 
   // 完全隱藏無產品的分類
   if (hidden) return null
@@ -255,14 +263,16 @@ export const SmallRow: React.FC<{
 
   return (
     <div className="h-small-section">
-      <div className="h-small-header" onClick={onToggle}>
-        <span className={`h-small-arrow ${expanded ? 'expanded' : ''}`}>▸</span>
-        <span className="h-small-name">{small.name}</span>
-        <span className="h-small-count">
-          ({loadedProducts.length}{hasMore ? '+' : ''}項)
-        </span>
-      </div>
-      {expanded && (
+      {!hideHeader && (
+        <div className="h-small-header" onClick={onToggle}>
+          <span className={`h-small-arrow ${expanded ? 'expanded' : ''}`}>▸</span>
+          <span className="h-small-name">{small.name}</span>
+          <span className="h-small-count">
+            ({loadedProducts.length}{hasMore ? '+' : ''}項)
+          </span>
+        </div>
+      )}
+      {(hideHeader || expanded) && (
         <>
           <div className="h-scroll-wrapper">
             <button
@@ -361,9 +371,22 @@ export const MidSection: React.FC<{
   onToggle: () => void
   expandedSmalls: Set<number>
   onToggleSmall: (id: number) => void
-}> = ({ mid, expanded, onToggle, expandedSmalls, onToggleSmall }) => {
+  majorId?: number
+  onCountChange?: (majorId: number, totalCount: number) => void
+}> = ({ mid, expanded, onToggle, expandedSmalls, onToggleSmall, majorId, onCountChange }) => {
+  // 彙總此中類下所有小類的產品數量，向上回報
+  const smallCountsRef = useRef<Record<number, number>>({})
+
+  const handleSmallCountChange = useCallback((smallId: number, count: number) => {
+    smallCountsRef.current[smallId] = count
+    const total = Object.values(smallCountsRef.current).reduce((sum, c) => sum + c, 0)
+    if (majorId !== undefined && onCountChange) {
+      onCountChange(majorId, total)
+    }
+  }, [majorId, onCountChange])
+
   // 不再根據 products.length 過濾 — SmallRow 會自行管理載入狀態
-  if (mid.smalls.length === 0) return null
+  if (mid.smalls.length === 0 && !mid.leafCategoryIds) return null
 
   return (
     <div className="h-mid-section">
@@ -373,14 +396,30 @@ export const MidSection: React.FC<{
       </div>
       {expanded && (
         <div className="h-mid-body">
-          {mid.smalls.map((small) => (
+          {mid.smalls.length > 0 ? (
+            mid.smalls.map((small) => (
+              <SmallRow
+                key={small.id}
+                small={small}
+                expanded={expandedSmalls.has(small.id)}
+                onToggle={() => onToggleSmall(small.id)}
+                onCountChange={handleSmallCountChange}
+              />
+            ))
+          ) : mid.leafCategoryIds ? (
             <SmallRow
-              key={small.id}
-              small={small}
-              expanded={expandedSmalls.has(small.id)}
-              onToggle={() => onToggleSmall(small.id)}
+              small={{
+                id: mid.id,
+                name: mid.name,
+                products: [],
+                categoryIds: mid.leafCategoryIds,
+              }}
+              expanded={true}
+              onToggle={() => {}}
+              onCountChange={handleSmallCountChange}
+              hideHeader
             />
-          ))}
+          ) : null}
         </div>
       )}
     </div>

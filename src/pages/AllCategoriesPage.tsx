@@ -4,6 +4,7 @@ import { type CategoryTreeNode } from '../types'
 import {
   buildHierarchy,
   MidSection,
+  SmallRow,
   type MajorCategoryData,
 } from '../components/CategoryHierarchy'
 
@@ -15,6 +16,7 @@ const AllCategoriesPage: React.FC = () => {
   const [majors, setMajors] = useState<MajorCategoryData[]>([])
   const [expandedMids, setExpandedMids] = useState<Set<number>>(new Set())
   const [expandedSmalls, setExpandedSmalls] = useState<Set<number>>(new Set())
+  const [majorCounts, setMajorCounts] = useState<Record<number, number>>({})
 
   const toggleMid = useCallback((midId: number) => {
     setExpandedMids((prev) => {
@@ -32,6 +34,10 @@ const AllCategoriesPage: React.FC = () => {
       else next.add(smallId)
       return next
     })
+  }, [])
+
+  const handleMajorCountChange = useCallback((majorId: number, count: number) => {
+    setMajorCounts((prev) => ({ ...prev, [majorId]: count }))
   }, [])
 
   useEffect(() => {
@@ -95,7 +101,7 @@ const AllCategoriesPage: React.FC = () => {
 
   if (error) return <div className="error">{error}</div>
 
-  const visibleMajors = majors.filter((m) => m.mids.length > 0)
+  const visibleMajors = majors.filter((m) => m.mids.length > 0 || m.leafCategoryIds)
   if (visibleMajors.length === 0) return <div className="error">尚無產品</div>
 
   return (
@@ -104,19 +110,40 @@ const AllCategoriesPage: React.FC = () => {
         <div key={major.id} className="h-major-section">
           <div className="h-major-banner">
             <span className="h-major-name">【 {major.name} 】</span>
-            <span className="h-major-count">載入中…</span>
+            <span className="h-major-count">
+            {majorCounts[major.id] !== undefined
+              ? `共 ${majorCounts[major.id]} 項`
+              : '載入中…'}
+          </span>
           </div>
 
-          {major.mids.map((mid) => (
-            <MidSection
-              key={mid.id}
-              mid={mid}
-              expanded={expandedMids.has(mid.id)}
-              onToggle={() => toggleMid(mid.id)}
-              expandedSmalls={expandedSmalls}
-              onToggleSmall={toggleSmall}
+          {major.mids.length > 0 ? (
+            major.mids.map((mid) => (
+              <MidSection
+                key={mid.id}
+                mid={mid}
+                expanded={expandedMids.has(mid.id)}
+                onToggle={() => toggleMid(mid.id)}
+                expandedSmalls={expandedSmalls}
+                onToggleSmall={toggleSmall}
+                majorId={major.id}
+                onCountChange={handleMajorCountChange}
+              />
+            ))
+          ) : major.leafCategoryIds ? (
+            <SmallRow
+              small={{
+                id: major.id,
+                name: major.name,
+                products: [],
+                categoryIds: major.leafCategoryIds,
+              }}
+              expanded={true}
+              onToggle={() => {}}
+              onCountChange={(_smallId, count) => handleMajorCountChange(major.id, count)}
+              hideHeader
             />
-          ))}
+          ) : null}
 
           {majorIdx < visibleMajors.length - 1 && <div className="h-major-divider" />}
         </div>
