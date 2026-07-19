@@ -28,9 +28,6 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
       document.body.style.width = '100%'
       document.body.style.overflowY = 'scroll' /* 保留 scrollbar 避免畫面跳動 */
 
-      // 滾動到最上方（確保 overlay 頂端可見）
-      window.scrollTo(0, 0)
-
       // 載入頂層分類
       fetchAllCategories()
         .then((categories) => {
