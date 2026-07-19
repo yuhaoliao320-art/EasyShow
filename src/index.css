@@ -220,10 +220,30 @@ textarea {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 40%;
-  flex-shrink: 1;
+  flex-shrink: 0;
   min-width: 0;
 }
+.mobile-search-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  border-radius: 6px;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.mobile-search-btn:hover {
+  background: #f0ebe4;
+}
+
 .front-admin-link {
   font-size: 0.85rem;
   color: var(--text-secondary);
@@ -1091,21 +1111,30 @@ textarea {
   background: #f0ebe4;
   min-height: 280px;
   aspect-ratio: 4 / 3;
+  -webkit-touch-callout: none;
 }
 .product-main-image img {
   width: 100%;
   max-height: 500px;
   object-fit: contain;
+  -webkit-touch-callout: none;
+  user-select: none;
 }
 .image-zoom-hint {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
-  background: rgba(0, 0, 0, 0.5);
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.55);
   color: #fff;
   font-size: 0.75rem;
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: opacity 0.3s ease;
 }
 .product-thumbnails {
   display: flex;
@@ -1145,6 +1174,7 @@ textarea {
   inset: 0;
   background: rgba(0, 0, 0, 0.9);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 1000;
@@ -1204,6 +1234,37 @@ textarea {
   font-size: 0.85rem;
   min-width: 50px;
   text-align: center;
+}
+
+/* Lightbox close hint (mobile) */
+.lightbox-close-hint {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+  padding: 6px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: lightboxHintFade 3s ease forwards;
+}
+
+@keyframes lightboxHintFade {
+  0%, 50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (max-width: 768px) {
+  .lightbox-close-hint {
+    bottom: 72px;
+    font-size: 0.7rem;
+    padding: 4px 12px;
+  }
 }
 
 /* ---------- Login Page ---------- */
@@ -2031,7 +2092,6 @@ a.footer-contact-item:hover svg {
     font-size: 0.8rem;
   }
   .front-logo {
-    max-width: 35vw;
     font-size: 1.1rem;
   }
   .footer-inner {
@@ -2041,6 +2101,13 @@ a.footer-contact-item:hover svg {
   }
   /* hide nav links on mobile, keep hamburger + logo + admin */
   .front-nav-link:not(.front-admin-link) {
+    display: none;
+  }
+  /* show mobile search icon, hide inline search bar */
+  .mobile-search-btn {
+    display: flex;
+  }
+  .desktop-search {
     display: none;
   }
 }
@@ -2476,7 +2543,6 @@ a.footer-contact-item:hover svg {
     margin: 0 4px;
   }
   .front-logo {
-    max-width: 28vw;
     font-size: 1rem;
   }
 }
@@ -2680,8 +2746,8 @@ a.footer-contact-item:hover svg {
 
 @media (max-width: 480px) {
   .toast {
-    top: 16px;
-    bottom: auto;
+    bottom: 80px;
+    top: auto;
     padding: 10px 18px;
     font-size: 0.88rem;
     white-space: normal;
@@ -2701,6 +2767,7 @@ a.footer-contact-item:hover svg {
   display: flex;
   flex-direction: column;
   animation: overlayFadeIn 0.2s ease both;
+  overflow-y: auto;
 }
 
 @keyframes overlayFadeIn {
@@ -2911,10 +2978,14 @@ a.footer-contact-item:hover svg {
 
 /* Mobile */
 @media (max-width: 768px) {
+  .search-overlay {
+    overflow-y: auto;
+  }
   .search-overlay-content {
     margin-top: 0;
     padding: 0;
-    max-height: 100vh;
+    max-height: none;
+    min-height: 100dvh;
     max-width: 100%;
   }
 
@@ -2922,10 +2993,17 @@ a.footer-contact-item:hover svg {
     padding: 12px 12px 0;
     gap: 8px;
     margin-bottom: 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
   .search-overlay-body {
     padding: 16px 12px 40px;
+    min-height: 100dvh;
   }
 
   .search-overlay-input-wrapper {

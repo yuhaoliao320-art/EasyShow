@@ -5,12 +5,14 @@ import { fetchAllSettings } from '../api/settings'
 import { buildCategoryTree, type CategoryTreeNode, settingsToMap } from '../types'
 import CategoryTree from './CategoryTree'
 import SearchBar from './SearchBar'
+import SearchOverlay from './SearchOverlay'
 
 const Layout: React.FC = () => {
   const [tree, setTree] = useState<CategoryTreeNode[]>([])
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [company, setCompany] = useState<Record<string, string>>({})
+  const [searchOpen, setSearchOpen] = useState(false)
   const location = useLocation()
 
   // Extract current category ID from URL for highlighting in sidebar
@@ -49,7 +51,16 @@ const Layout: React.FC = () => {
         <Link to="/" className="front-logo">
           {company.company_name || 'EasyShow'}
         </Link>
-        <SearchBar />
+        {/* Desktop: inline search bar / Mobile: search icon button */}
+        <SearchBar className="desktop-search" />
+        <button
+          className="mobile-search-btn"
+          onClick={() => setSearchOpen(true)}
+          aria-label="搜尋"
+        >
+          🔍
+        </button>
+        <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
         <nav className="front-nav">
           <Link
             to="/about"

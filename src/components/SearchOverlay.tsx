@@ -21,7 +21,16 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
   // 打開 overlay 時：鎖定 body 滾動、載入熱門分類
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden'
+      // 鎖定 body 滾動（支援手機版）
+      const scrollY = window.scrollY
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.width = '100%'
+      document.body.style.overflowY = 'scroll' /* 保留 scrollbar 避免畫面跳動 */
+
+      // 滾動到最上方（確保 overlay 頂端可見）
+      window.scrollTo(0, 0)
+
       // 載入頂層分類
       fetchAllCategories()
         .then((categories) => {
@@ -32,11 +41,22 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
         })
         .catch(() => {})
     } else {
-      document.body.style.overflow = ''
+      // 還原 body 滾動
+      const scrollY = document.body.style.top
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.width = ''
+      document.body.style.overflowY = ''
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY.replace('-', '')) || 0)
+      }
     }
 
     return () => {
-      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.width = ''
+      document.body.style.overflowY = ''
     }
   }, [isOpen])
 
