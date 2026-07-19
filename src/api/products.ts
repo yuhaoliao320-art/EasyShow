@@ -360,14 +360,17 @@ export async function searchProducts(
 ): Promise<Product[]> {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('*, product_images(*)')
     .ilike('name', `%${keyword}%`)
     .eq('is_published', true)
     .order('sort_order', { ascending: true })
     .limit(50)
 
   if (error) throw error
-  return data ?? []
+  return (data ?? []).map((item: any) => ({
+    ...item,
+    images: item.product_images ?? [],
+  }))
 }
 
 /** 批次取得多個分類下的產品（前台用，僅已上架）
