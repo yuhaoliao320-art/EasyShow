@@ -87,15 +87,7 @@ const Layout: React.FC = () => {
 
       {/* Body: sidebar + content */}
       <div className="front-body">
-        {/* Mobile overlay */}
-        {sidebarOpen && (
-          <div
-            className="sidebar-overlay"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* Sidebar */}
+        {/* Sidebar — rendered before overlay so it stays on top in stacking order */}
         <aside className={`front-sidebar ${sidebarOpen ? 'open' : ''}`}>
           <div className="front-sidebar-header">
             <h3>產品分類</h3>
@@ -115,6 +107,14 @@ const Layout: React.FC = () => {
             )}
           </nav>
         </aside>
+
+        {/* Mobile overlay — rendered after sidebar so it stays behind in stacking order */}
+        {sidebarOpen && (
+          <div
+            className="sidebar-overlay"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
         {/* Main content */}
         <main className="front-content">
