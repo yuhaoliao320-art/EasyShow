@@ -423,6 +423,12 @@ textarea {
   color: var(--text);
   padding: 2px 0;
   cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  line-height: inherit;
+  text-align: left;
+  display: inline;
 }
 .tree-label.active {
   color: var(--primary);

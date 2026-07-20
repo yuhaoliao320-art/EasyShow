@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import type { CategoryTreeNode } from '../types'
 
 interface CategoryTreeProps {
@@ -13,8 +13,16 @@ const CategoryTreeItem: React.FC<{
   activeId?: number
 }> = ({ node, activeId }) => {
   const [expanded, setExpanded] = useState(node.depth === 0)
+  const navigate = useNavigate()
   const hasChildren = node.children.length > 0
   const isActive = node.id === activeId
+
+  const handleCategoryClick = (e: React.MouseEvent | React.KeyboardEvent) => {
+    // 避免點擊展開按鈕時也觸發導航
+    if ((e as React.MouseEvent).button === 0 || (e as React.KeyboardEvent).key === 'Enter') {
+      navigate(`/category/${node.id}`)
+    }
+  }
 
   return (
     <div className="tree-item" style={{ paddingLeft: `${node.depth * 20}px` }}>
@@ -30,12 +38,13 @@ const CategoryTreeItem: React.FC<{
         ) : (
           <span className="tree-toggle-placeholder" />
         )}
-        <Link
-          to={`/category/${node.id}`}
+        <button
           className={`tree-label ${isActive ? 'active' : ''}`}
+          onClick={handleCategoryClick}
+          onKeyDown={(e) => e.key === 'Enter' && handleCategoryClick(e)}
         >
           {node.name}
-        </Link>
+        </button>
       </div>
       {hasChildren && expanded && (
         <div className="tree-children">
