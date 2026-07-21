@@ -240,12 +240,16 @@ export const SmallRow: React.FC<{
     }
   }, [loading, initialized, hasMore, loadedProducts.length])
 
+  // 用 ref 保存 onCountChange，避免該 callback 變動觸發無限 re-render 迴圈
+  const onCountChangeRef = useRef(onCountChange)
+  onCountChangeRef.current = onCountChange
+
   // 有產品載入時，向上回報已載入數量
   useEffect(() => {
-    if ((expanded || hideHeader) && initialized && onCountChange) {
-      onCountChange(small.id, loadedProducts.length)
+    if ((expanded || hideHeader) && initialized && onCountChangeRef.current) {
+      onCountChangeRef.current(small.id, loadedProducts.length)
     }
-  }, [loadedProducts.length, expanded, initialized, hideHeader, onCountChange, small.id])
+  }, [loadedProducts.length, expanded, initialized, hideHeader])
 
   // 完全隱藏無產品的分類
   if (hidden) return null
